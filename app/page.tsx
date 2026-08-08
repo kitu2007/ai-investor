@@ -8,7 +8,12 @@ import CompanyForm from "@/components/CompanyForm";
 import NavShell from "@/components/NavShell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, RefreshCw, TrendingUp, BarChart3, Star } from "lucide-react";
+import { Plus, Search, RefreshCw, BarChart3, Star } from "lucide-react";
+
+async function fetchCompanies(): Promise<Company[]> {
+  const response = await fetch("/api/portfolio");
+  return (await response.json()) as Company[];
+}
 
 export default function Home() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -19,13 +24,22 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/portfolio");
-    const data = await res.json();
+    const data = await fetchCompanies();
     setCompanies(data);
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    let active = true;
+    void fetchCompanies().then((data) => {
+      if (!active) return;
+      setCompanies(data);
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function handleSave(company: Company) {
     await fetch("/api/portfolio", {
@@ -56,10 +70,6 @@ export default function Home() {
   }
 
   const highConviction = companies.filter((c) => c.conviction === "High").length;
-  const scoredCompanies = companies.filter((c) => c.overallScore != null);
-  const avgScore = scoredCompanies.length
-    ? (scoredCompanies.reduce((s, c) => s + (c.overallScore ?? 0), 0) / scoredCompanies.length).toFixed(1)
-    : "—";
   const marginCompanies = companies.filter((c) => c.grossMarginPct != null);
   const avgGrossMargin = marginCompanies.length
     ? (marginCompanies.reduce((s, c) => s + (c.grossMarginPct ?? 0), 0) / marginCompanies.length).toFixed(1)

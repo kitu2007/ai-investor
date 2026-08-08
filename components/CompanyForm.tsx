@@ -83,7 +83,7 @@ export default function CompanyForm({ initial, onSave, onClose }: Props) {
     onSave(company);
   }
 
-  function ScoreInput({ label, field }: { label: string; field: string }) {
+  function renderScoreInput(label: string, field: string) {
     const val = data[field as keyof typeof data] as number | null;
     return (
       <div>
@@ -108,7 +108,7 @@ export default function CompanyForm({ initial, onSave, onClose }: Props) {
     );
   }
 
-  function NumField({ label, field, suffix = "" }: { label: string; field: string; suffix?: string }) {
+  function renderNumField(label: string, field: string, suffix = "") {
     const val = data[field as keyof typeof data] as number | null;
     return (
       <div>
@@ -236,16 +236,16 @@ export default function CompanyForm({ initial, onSave, onClose }: Props) {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <ScoreInput label="Overall Moat Score" field="moatScore" />
-              <ScoreInput label="Brand Strength" field="brandStrength" />
-              <ScoreInput label="Switching Costs" field="switchingCosts" />
-              <ScoreInput label="Network Effects" field="networkEffects" />
-              <ScoreInput label="Pricing Power" field="pricingPower" />
-              <ScoreInput label="Management Quality" field="managementQuality" />
-              <ScoreInput label="R&D Effectiveness" field="rdEffectiveness" />
-              <NumField label="R&D % of Revenue" field="rdPctRevenue" suffix="%" />
-              <ScoreInput label="Labor Relations" field="laborRelations" />
-              <NumField label="Insider Ownership %" field="insiderOwnershipPct" suffix="%" />
+              {renderScoreInput("Overall Moat Score", "moatScore")}
+              {renderScoreInput("Brand Strength", "brandStrength")}
+              {renderScoreInput("Switching Costs", "switchingCosts")}
+              {renderScoreInput("Network Effects", "networkEffects")}
+              {renderScoreInput("Pricing Power", "pricingPower")}
+              {renderScoreInput("Management Quality", "managementQuality")}
+              {renderScoreInput("R&D Effectiveness", "rdEffectiveness")}
+              {renderNumField("R&D % of Revenue", "rdPctRevenue", "%")}
+              {renderScoreInput("Labor Relations", "laborRelations")}
+              {renderNumField("Insider Ownership %", "insiderOwnershipPct", "%")}
             </div>
 
             <div className="grid grid-cols-2 gap-4 mt-4">
@@ -253,7 +253,7 @@ export default function CompanyForm({ initial, onSave, onClose }: Props) {
                 <label className="block text-xs text-gray-400 mb-1">CEO Name</label>
                 <Input value={data.ceoName as string} onChange={(e) => set("ceoName", e.target.value)} placeholder="e.g. Jensen Huang" />
               </div>
-              <NumField label="CEO Tenure (years)" field="ceoTenureYears" />
+              {renderNumField("CEO Tenure (years)", "ceoTenureYears")}
               <div>
                 <label className="block text-xs text-gray-400 mb-2">Founder-Led</label>
                 <div className="flex gap-2">
@@ -310,7 +310,7 @@ export default function CompanyForm({ initial, onSave, onClose }: Props) {
             </div>
 
             <div className="mt-4">
-              <label className="block text-xs text-gray-400 mb-1">Scuttlebutt Notes (Fisher's channel checks)</label>
+              <label className="block text-xs text-gray-400 mb-1">Scuttlebutt Notes (Fisher&rsquo;s channel checks)</label>
               <Textarea
                 rows={3}
                 value={data.scuttlebuttNotes}
@@ -326,18 +326,18 @@ export default function CompanyForm({ initial, onSave, onClose }: Props) {
               Financials
             </h3>
             <div className="grid grid-cols-3 gap-3">
-              <NumField label="Gross Margin %" field="grossMarginPct" suffix="%" />
-              <NumField label="Operating Margin %" field="operatingMarginPct" suffix="%" />
-              <NumField label="Net Margin %" field="netMarginPct" suffix="%" />
-              <NumField label="FCF Margin %" field="fcfMarginPct" suffix="%" />
-              <NumField label="Revenue Growth 1Y %" field="revenueGrowth1Y" suffix="%" />
-              <NumField label="Revenue CAGR 3Y %" field="revenueCAGR3Y" suffix="%" />
-              <NumField label="Revenue CAGR 5Y %" field="revenueCAGR5Y" suffix="%" />
-              <NumField label="EPS Growth 3Y %" field="epsGrowth3Y" suffix="%" />
-              <NumField label="ROIC %" field="roic" suffix="%" />
-              <NumField label="ROE %" field="roe" suffix="%" />
-              <NumField label="Debt / Equity" field="debtToEquity" />
-              <NumField label="Current Ratio" field="currentRatio" />
+              {renderNumField("Gross Margin %", "grossMarginPct", "%")}
+              {renderNumField("Operating Margin %", "operatingMarginPct", "%")}
+              {renderNumField("Net Margin %", "netMarginPct", "%")}
+              {renderNumField("FCF Margin %", "fcfMarginPct", "%")}
+              {renderNumField("Revenue Growth 1Y %", "revenueGrowth1Y", "%")}
+              {renderNumField("Revenue CAGR 3Y %", "revenueCAGR3Y", "%")}
+              {renderNumField("Revenue CAGR 5Y %", "revenueCAGR5Y", "%")}
+              {renderNumField("EPS Growth 3Y %", "epsGrowth3Y", "%")}
+              {renderNumField("ROIC %", "roic", "%")}
+              {renderNumField("ROE %", "roe", "%")}
+              {renderNumField("Debt / Equity", "debtToEquity")}
+              {renderNumField("Current Ratio", "currentRatio")}
             </div>
           </section>
 
@@ -347,13 +347,13 @@ export default function CompanyForm({ initial, onSave, onClose }: Props) {
               Price Context
             </h3>
             <div className="grid grid-cols-3 gap-3">
-              <NumField label="Current Price" field="currentPrice" />
-              <NumField label="52W High" field="week52High" />
-              <NumField label="52W Low" field="week52Low" />
-              <NumField label="Market Cap ($B)" field="marketCapB" />
-              <NumField label="P/E" field="pe" />
-              <NumField label="P/FCF" field="pFcf" />
-              <NumField label="EV/EBITDA" field="evEbitda" />
+              {renderNumField("Current Price", "currentPrice")}
+              {renderNumField("52W High", "week52High")}
+              {renderNumField("52W Low", "week52Low")}
+              {renderNumField("Market Cap ($B)", "marketCapB")}
+              {renderNumField("P/E", "pe")}
+              {renderNumField("P/FCF", "pFcf")}
+              {renderNumField("EV/EBITDA", "evEbitda")}
             </div>
           </section>
 

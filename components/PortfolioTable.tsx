@@ -311,7 +311,7 @@ export default function PortfolioTable({ companies, onSelect, selectedId, global
           {table.getRowModel().rows.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="text-center py-12 text-gray-500">
-                No companies yet. Click "+ Add Company" to start building your research portfolio.
+                No companies yet. Click “+ Add Company” to start building your research portfolio.
               </td>
             </tr>
           ) : (

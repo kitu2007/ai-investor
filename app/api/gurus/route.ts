@@ -155,5 +155,18 @@ export async function GET(req: NextRequest) {
     if (!guru) return NextResponse.json({ error: "not found" }, { status: 404 });
     return NextResponse.json(guru);
   }
-  return NextResponse.json(GURU_PORTFOLIOS.map(({ holdings: _, ...g }) => g));
+  return NextResponse.json(
+    GURU_PORTFOLIOS.map(
+      ({ id, name, firm, style, aum, philosophy, filingSource, asOf }) => ({
+        id,
+        name,
+        firm,
+        style,
+        aum,
+        philosophy,
+        filingSource,
+        asOf,
+      }),
+    ),
+  );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { WatchlistEntry, WatchlistKind } from "@/lib/watchlist-types";
 import WatchlistTable from "./WatchlistTable";
 import WatchlistDetailPanel from "./WatchlistDetailPanel";
@@ -10,6 +10,11 @@ import { Search, RefreshCw, TrendingDown, TrendingUp as TrendingUpIcon } from "l
 
 interface Props { kind: WatchlistKind }
 
+async function fetchWatchlist(kind: WatchlistKind): Promise<WatchlistEntry[]> {
+  const response = await fetch("/api/watchlist?kind=" + kind);
+  return (await response.json()) as WatchlistEntry[];
+}
+
 export default function WatchlistView({ kind }: Props) {
   const [entries, setEntries] = useState<WatchlistEntry[]>([]);
   const [selected, setSelected] = useState<WatchlistEntry | null>(null);
@@ -17,14 +22,17 @@ export default function WatchlistView({ kind }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState<Set<string>>(new Set());
 
-  const load = useCallback(async () => {
-    const res = await fetch(`/api/watchlist?kind=${kind}`);
-    const data = await res.json();
-    setEntries(data);
-    setLoading(false);
+  useEffect(() => {
+    let active = true;
+    void fetchWatchlist(kind).then((data) => {
+      if (!active) return;
+      setEntries(data);
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
   }, [kind]);
-
-  useEffect(() => { load(); }, [load]);
 
   async function refreshReturns(ticker: string) {
     setRefreshing((s) => new Set(s).add(ticker));

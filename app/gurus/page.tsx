@@ -78,7 +78,9 @@ function GuruCard({ guru }: { guru: GuruProfile }) {
         <div className="border-t border-gray-700">
           {/* Philosophy */}
           <div className="px-5 py-4 bg-gray-800/30 border-b border-gray-700">
-            <p className="text-xs text-gray-300 italic leading-relaxed">"{guru.philosophy}"</p>
+            <p className="text-xs text-gray-300 italic leading-relaxed">
+              &ldquo;{guru.philosophy}&rdquo;
+            </p>
             <p className="text-xs text-gray-600 mt-2">{guru.filingSource}</p>
           </div>
 

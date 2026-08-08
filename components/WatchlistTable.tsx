@@ -9,7 +9,6 @@ import { WatchlistEntry } from "@/lib/watchlist-types";
 import { fmtPrice, fmtPct, fmt, marginColor, convictionColor } from "@/lib/utils";
 import { ChevronUp, ChevronDown, ChevronsUpDown, RefreshCw } from "lucide-react";
 import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
 import TickerLink from "./TickerLink";
 
 interface Props {

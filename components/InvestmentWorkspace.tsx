@@ -57,6 +57,18 @@ async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {
   return body;
 }
 
+async function fetchBackendStatus(): Promise<BackendStatus> {
+  try {
+    return await jsonRequest<BackendStatus>("/api/investment-os/status");
+  } catch (reason) {
+    return {
+      connected: false,
+      service: "Investment OS",
+      detail: reason instanceof Error ? reason.message : "Backend unavailable.",
+    };
+  }
+}
+
 function SignalBadge({ analysis }: { analysis: TechnicalAnalysis }) {
   const color =
     analysis.signal === "strong" || analysis.signal === "positive"
@@ -404,23 +416,22 @@ export default function InvestmentWorkspace() {
 
   const checkStatus = useCallback(async () => {
     setStatusLoading(true);
-    try {
-      const result = await jsonRequest<BackendStatus>("/api/investment-os/status");
-      setStatus(result);
-    } catch (reason) {
-      setStatus({
-        connected: false,
-        service: "Investment OS",
-        detail: reason instanceof Error ? reason.message : "Backend unavailable.",
-      });
-    } finally {
-      setStatusLoading(false);
-    }
+    const result = await fetchBackendStatus();
+    setStatus(result);
+    setStatusLoading(false);
   }, []);
 
   useEffect(() => {
-    void checkStatus();
-  }, [checkStatus]);
+    let active = true;
+    void fetchBackendStatus().then((result) => {
+      if (!active) return;
+      setStatus(result);
+      setStatusLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function runResearch(event: FormEvent) {
     event.preventDefault();
