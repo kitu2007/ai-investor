@@ -57,3 +57,87 @@ export interface BackendStatus {
   service: string;
   detail?: string;
 }
+
+export interface ResearchSource {
+  id: string;
+  title: string;
+  publisher: string;
+  url: string;
+  published_at: string | null;
+  retrieved_at: string;
+  source_type: string;
+}
+
+export interface ResearchPerspective {
+  agent: string;
+  stance: string;
+  confidence: number;
+  evidence_sufficiency: string;
+  summary: string;
+  claims: Array<{
+    statement: string;
+    classification: "fact" | "inference" | "assumption" | "calculation";
+    source_ids: string[];
+  }>;
+  risks: string[];
+  invalidation_conditions: string[];
+  unresolved_questions: string[];
+}
+
+export interface ResearchArtifact {
+  schema_version: "1.0";
+  ticker: string;
+  company_name: string;
+  question: string;
+  generated_at: string;
+  as_of: string;
+  executive_summary: string;
+  perspectives: ResearchPerspective[];
+  scenarios: Array<{
+    name: "bear" | "base" | "bull";
+    probability: number;
+    summary: string;
+    assumptions: string[];
+    valuation_note: string;
+  }>;
+  synthesis: {
+    status: string;
+    confidence: number;
+    summary: string;
+    what_changed: string[];
+    agreements: string[];
+    disagreements: string[];
+    catalysts: string[];
+    risks: string[];
+    next_questions: string[];
+  };
+  sources: ResearchSource[];
+  disclaimer: string;
+}
+
+export interface ResearchRun {
+  id: string;
+  ticker: string;
+  company_name: string;
+  question: string;
+  status: "queued" | "running" | "completed" | "failed";
+  runner: string;
+  technical_snapshot: TechnicalAnalysis | null;
+  artifact: ResearchArtifact | null;
+  artifact_path: string | null;
+  markdown_path: string | null;
+  error: string | null;
+  requested_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface ResearchCapabilities {
+  codex: {
+    enabled: boolean;
+    installed: boolean;
+    authenticated: boolean;
+    authentication: string;
+  };
+  api_key_required: boolean;
+}

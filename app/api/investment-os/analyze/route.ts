@@ -1,45 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { investmentOsRequest, publicError } from "@/lib/investment-os-server";
+import { priceHistory } from "@/lib/investment-os-market";
 import type {
   EvidenceItem,
   InvestmentCompany,
   ResearchResponse,
   TechnicalAnalysis,
 } from "@/lib/investment-os-types";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const YahooFinance = require("yahoo-finance2").default;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const yf: any = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
-
-type PricePoint = { date: string; close: number };
-
-function startDate(): Date {
-  const date = new Date();
-  date.setMonth(date.getMonth() - 18);
-  return date;
-}
-
-async function priceHistory(ticker: string): Promise<PricePoint[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const chart: any = await yf.chart(ticker, {
-    period1: startDate(),
-    period2: new Date(),
-    interval: "1d",
-  });
-  return (chart?.quotes ?? [])
-    .filter(
-      (quote: { date?: Date; adjclose?: number | null; close?: number | null }) =>
-        quote.date && (quote.adjclose ?? quote.close) != null,
-    )
-    .map(
-      (quote: { date: Date; adjclose?: number | null; close?: number | null }) => ({
-        date: new Date(quote.date).toISOString().slice(0, 10),
-        close: quote.adjclose ?? quote.close,
-      }),
-    );
-}
 
 async function optionalContext(ticker: string): Promise<{
   company: InvestmentCompany | null;

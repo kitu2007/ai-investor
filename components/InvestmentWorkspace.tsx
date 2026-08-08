@@ -3,13 +3,13 @@
 import {
   Activity,
   AlertTriangle,
-  ArrowRight,
   BookOpen,
   Building2,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
   Database,
+  ExternalLink,
   LoaderCircle,
   MessageSquareText,
   Plus,
@@ -24,6 +24,8 @@ import type {
   BackendStatus,
   EvidenceItem,
   InvestmentCompany,
+  ResearchCapabilities,
+  ResearchRun,
   ResearchResponse,
   TechnicalAnalysis,
 } from "@/lib/investment-os-types";
@@ -46,6 +48,10 @@ function number(value: number | null | undefined, digits = 2): string {
 
 function friendlyFlag(value: string): string {
   return value.replaceAll("_", " ");
+}
+
+function friendlyLabel(value: string): string {
+  return value.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {
@@ -217,6 +223,160 @@ function TechnicalPanel({ analysis }: { analysis: TechnicalAnalysis | null }) {
         </div>
       ) : null}
     </div>
+  );
+}
+
+function ResearchPanel({
+  run,
+  capabilities,
+  loading,
+}: {
+  run: ResearchRun | null;
+  capabilities: ResearchCapabilities | null;
+  loading: boolean;
+}) {
+  const artifact = run?.artifact;
+  const codexReady = Boolean(
+    capabilities?.codex.enabled && capabilities.codex.installed && capabilities.codex.authenticated,
+  );
+
+  return (
+    <section className="rounded-xl border border-violet-400/20 bg-violet-400/[0.04] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-violet-200">
+          <Sparkles size={14} /> Codex research dossier
+        </div>
+        <span
+          className={
+            "rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide " +
+            (codexReady
+              ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+              : "border-amber-400/20 bg-amber-400/10 text-amber-300")
+          }
+        >
+          {codexReady ? "Codex ready" : "Codex unavailable"}
+        </span>
+      </div>
+
+      {loading || run?.status === "queued" || run?.status === "running" ? (
+        <div className="mt-4 flex items-start gap-2 rounded-lg border border-violet-400/15 bg-gray-950/50 p-3">
+          <LoaderCircle size={14} className="mt-0.5 shrink-0 animate-spin text-violet-300" />
+          <div>
+            <p className="text-xs font-medium text-gray-200">
+              {run?.status === "running" ? "Codex is analyzing" : "Preparing Codex analysis"}
+            </p>
+            <p className="mt-1 text-[10px] leading-4 text-gray-500">
+              Independent perspectives, evidence checks, scenarios and disagreements are being assembled.
+            </p>
+          </div>
+        </div>
+      ) : run?.status === "failed" ? (
+        <div className="mt-3 rounded-lg border border-rose-400/20 bg-rose-400/[0.06] p-3 text-[11px] leading-5 text-rose-200">
+          {run.error || "The local Codex analysis failed."}
+        </div>
+      ) : artifact ? (
+        <div className="mt-4 space-y-3">
+          <div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                {friendlyLabel(artifact.synthesis.status)}
+              </span>
+              <span className="text-[10px] text-gray-500">
+                {Math.round(artifact.synthesis.confidence * 100)}% confidence
+              </span>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-gray-300">{artifact.executive_summary}</p>
+            <p className="mt-2 text-[10px] text-gray-600">As of {artifact.as_of}</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-1.5">
+            {artifact.scenarios.map((scenario) => (
+              <div key={scenario.name} className="rounded-lg border border-gray-800 bg-gray-950/60 p-2">
+                <div className="text-[9px] font-semibold uppercase text-gray-500">{scenario.name}</div>
+                <div className="mt-0.5 text-sm font-semibold text-gray-200">
+                  {Math.round(scenario.probability * 100)}%
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div>
+            <h3 className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+              Independent perspectives
+            </h3>
+            <div className="mt-2 space-y-1.5">
+              {artifact.perspectives.map((perspective) => (
+                <details key={perspective.agent} className="rounded-lg border border-gray-800 bg-gray-950/60">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[11px]">
+                    <span className="font-medium text-gray-300">{friendlyLabel(perspective.agent)}</span>
+                    <span className="text-gray-600">
+                      {friendlyLabel(perspective.stance)} · {Math.round(perspective.confidence * 100)}%
+                    </span>
+                  </summary>
+                  <div className="border-t border-gray-800 px-3 py-2 text-[10px] leading-4 text-gray-500">
+                    {perspective.summary}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+
+          {artifact.synthesis.disagreements.length > 0 ? (
+            <div className="rounded-lg border border-amber-400/15 bg-amber-400/[0.04] p-3">
+              <h3 className="text-[10px] font-semibold uppercase tracking-wide text-amber-300">
+                Disagreements
+              </h3>
+              <ul className="mt-2 space-y-1 text-[10px] leading-4 text-gray-400">
+                {artifact.synthesis.disagreements.map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {artifact.sources.length > 0 ? (
+            <div>
+              <h3 className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                Sources
+              </h3>
+              <div className="mt-2 space-y-1.5">
+                {artifact.sources.slice(0, 8).map((source) =>
+                  source.url.startsWith("http") ? (
+                    <a
+                      key={source.id}
+                      href={source.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-start justify-between gap-2 text-[10px] leading-4 text-blue-300 hover:text-blue-200"
+                    >
+                      <span>{source.title}</span>
+                      <ExternalLink size={10} className="mt-0.5 shrink-0" />
+                    </a>
+                  ) : (
+                    <div
+                      key={source.id}
+                      className="flex items-start justify-between gap-2 text-[10px] leading-4 text-gray-400"
+                    >
+                      <span>{source.title}</span>
+                      <span className="shrink-0 text-[9px] uppercase text-gray-600">Local input</span>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <p className="mt-3 text-[11px] leading-5 text-gray-500">
+          Request a Codex analysis to create a saved, question-specific dossier. Viewing saved research and
+          recalculating technicals do not invoke a model.
+        </p>
+      )}
+
+      <div className="mt-3 border-t border-violet-400/10 pt-3 text-[9px] leading-4 text-gray-600">
+        ChatGPT/Codex sign-in · no project API key · local reports stay outside Git
+      </div>
+    </section>
   );
 }
 
@@ -408,7 +568,10 @@ export default function InvestmentWorkspace() {
   const [company, setCompany] = useState<InvestmentCompany | null>(null);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
   const [status, setStatus] = useState<BackendStatus | null>(null);
+  const [capabilities, setCapabilities] = useState<ResearchCapabilities | null>(null);
+  const [researchRun, setResearchRun] = useState<ResearchRun | null>(null);
   const [loading, setLoading] = useState(false);
+  const [codexLoading, setCodexLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -423,15 +586,67 @@ export default function InvestmentWorkspace() {
 
   useEffect(() => {
     let active = true;
-    void fetchBackendStatus().then((result) => {
+    void Promise.all([
+      fetchBackendStatus(),
+      jsonRequest<ResearchCapabilities>("/api/investment-os/research/capabilities").catch(() => null),
+    ]).then(([result, researchCapabilities]) => {
       if (!active) return;
       setStatus(result);
+      setCapabilities(researchCapabilities);
       setStatusLoading(false);
     });
     return () => {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!normalizedTicker) return;
+    let active = true;
+    const timeout = window.setTimeout(() => {
+      void fetch("/api/investment-os/research/latest?ticker=" + encodeURIComponent(normalizedTicker))
+        .then(async (response) => {
+          if (response.status === 404) return null;
+          if (!response.ok) throw new Error("Could not load saved research.");
+          return (await response.json()) as ResearchRun;
+        })
+        .then((run) => {
+          if (active) setResearchRun(run);
+        })
+        .catch(() => {
+          if (active) setResearchRun(null);
+        });
+    }, 250);
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+    };
+  }, [normalizedTicker]);
+
+  useEffect(() => {
+    if (!researchRun || !["queued", "running"].includes(researchRun.status)) return;
+    let active = true;
+    const interval = window.setInterval(() => {
+      void jsonRequest<ResearchRun>(
+        "/api/investment-os/research/run/" + encodeURIComponent(researchRun.id),
+      )
+        .then((run) => {
+          if (!active) return;
+          setResearchRun(run);
+          if (run.status === "completed" || run.status === "failed") {
+            setCodexLoading(false);
+            window.clearInterval(interval);
+          }
+        })
+        .catch(() => {
+          if (active) setCodexLoading(false);
+        });
+    }, 3000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [researchRun]);
 
   async function runResearch(event: FormEvent) {
     event.preventDefault();
@@ -451,7 +666,6 @@ export default function InvestmentWorkspace() {
       setCompany(result.company);
       setEvidence(result.evidence);
       setMessages((current) => [...current, { role: "assistant", content: result.reply }]);
-      setQuestion("");
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : "Research request failed.";
       setError(message);
@@ -461,6 +675,35 @@ export default function InvestmentWorkspace() {
       ]);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function requestCodexResearch() {
+    if (!normalizedTicker || !question.trim()) return;
+    const prompt = question.trim();
+    setCodexLoading(true);
+    setError("");
+    setMessages((current) => [...current, { role: "user", content: prompt }]);
+    try {
+      const run = await jsonRequest<ResearchRun>("/api/investment-os/research/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker: normalizedTicker, question: prompt }),
+      });
+      setResearchRun(run);
+      setAnalysis(run.technical_snapshot);
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content:
+            "Codex analysis is queued. The saved dossier will appear in the research panel when complete.",
+        },
+      ]);
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : "Could not request Codex analysis.";
+      setError(message);
+      setCodexLoading(false);
     }
   }
 
@@ -474,10 +717,10 @@ export default function InvestmentWorkspace() {
                 <Sparkles size={12} /> Evidence-first research workspace
               </div>
               <h1 className="text-xl font-semibold tracking-tight text-white">
-                Ask a company question. Get a measurable technical read.
+                Ask a company question. Choose quick signals or a full Codex dossier.
               </h1>
               <p className="mt-1 max-w-2xl text-xs leading-5 text-gray-500">
-                Live daily prices feed your FastAPI analysis engine; company facts and evidence stay in PostgreSQL.
+                Deterministic calculations stay separate from question-specific Codex research and cited sources.
               </p>
             </div>
             <button
@@ -585,17 +828,41 @@ export default function InvestmentWorkspace() {
                 className="min-h-12 flex-1 resize-none bg-transparent px-2 py-1 text-sm leading-5 text-white outline-none placeholder:text-gray-600"
                 aria-label="Research question"
               />
-              <button
-                disabled={loading || !normalizedTicker || !question.trim() || !status?.connected}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-blue-600 text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Run research"
-              >
-                {loading ? <LoaderCircle size={17} className="animate-spin" /> : <ArrowRight size={17} />}
-              </button>
+              <div className="flex shrink-0 flex-col gap-1.5">
+                <button
+                  disabled={loading || !normalizedTicker || !question.trim() || !status?.connected}
+                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Calculate quick signals"
+                >
+                  {loading ? <LoaderCircle size={14} className="animate-spin" /> : <Activity size={14} />}
+                  Quick signals
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void requestCodexResearch()}
+                  disabled={
+                    codexLoading ||
+                    !normalizedTicker ||
+                    !question.trim() ||
+                    !capabilities?.codex.enabled ||
+                    !capabilities.codex.installed ||
+                    !capabilities.codex.authenticated
+                  }
+                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3 text-[11px] font-semibold text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Request Codex analysis"
+                >
+                  {codexLoading ? (
+                    <LoaderCircle size={14} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={14} />
+                  )}
+                  Request Codex
+                </button>
+              </div>
             </div>
             {error ? <p className="mx-auto mt-2 max-w-3xl text-xs text-rose-300">{error}</p> : null}
             <p className="mx-auto mt-2 max-w-3xl text-center text-[10px] text-gray-700">
-              Research support only—not personalized financial advice. Market data may be delayed.
+              Quick signals use no model. Request Codex uses your Codex allowance, not an API key.
             </p>
           </form>
         </div>
@@ -610,6 +877,10 @@ export default function InvestmentWorkspace() {
           <span className="text-[10px] text-gray-600">SPY benchmark</span>
         </div>
         <TechnicalPanel analysis={analysis} />
+
+        <div className="mt-3">
+          <ResearchPanel run={researchRun} capabilities={capabilities} loading={codexLoading} />
+        </div>
 
         <div className="mt-3">
           <CompanyPanel
@@ -628,8 +899,8 @@ export default function InvestmentWorkspace() {
             <ShieldCheck size={14} /> Foundation mode
           </div>
           <p className="mt-2 text-[11px] leading-5 text-gray-500">
-            Today this workspace provides deterministic technical analysis and durable evidence storage.
-            Fundamental, macro, valuation, and LLM research agents are the next layers—not simulated here.
+            Deterministic technicals remain authoritative. Codex dossiers are validated, versioned and saved
+            locally before the UI displays their perspectives, sources and disagreements.
           </p>
           <div className="mt-3 flex items-center gap-1.5 text-[10px] text-gray-600">
             <BookOpen size={11} /> Explainable signals · no automatic trading
