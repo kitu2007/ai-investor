@@ -16,6 +16,10 @@ Saved dossier history is available per ticker. Select a completed version, write
 choose **Ask follow-up** to reuse that report's validated context. A follow-up is smaller than a full
 council dossier, but it still invokes Codex and consumes some of the signed-in account's allowance.
 
+The **Deterministic valuation lab** accepts explicit normalized free cash flow, diluted shares, net debt,
+and bear/base/bull assumptions. It calculates DCF values, a probability-weighted result, and reverse-DCF
+implied growth without invoking a model. Example rates are visible starting points, not company facts.
+
 ## Run locally
 
 First start PostgreSQL, migrations, and the backend from the sibling repository:

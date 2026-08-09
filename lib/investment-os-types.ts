@@ -168,6 +168,48 @@ export interface FollowUpRun {
   completed_at: string | null;
 }
 
+export interface ValuationScenarioInput {
+  name: "bear" | "base" | "bull";
+  probability: number;
+  annual_fcf_growth: number;
+  discount_rate: number;
+  terminal_growth: number;
+}
+
+export interface ValuationScenarioResult extends ValuationScenarioInput {
+  projected_fcfs: number[];
+  pv_forecast_fcfs: number;
+  pv_terminal_value: number;
+  enterprise_value: number;
+  equity_value: number;
+  fair_value_per_share: number;
+  upside_downside: number;
+}
+
+export interface ValuationResponse {
+  ticker: string;
+  units: string;
+  current_price: number;
+  normalized_fcf: number;
+  shares_outstanding: number;
+  net_debt: number;
+  market_cap: number;
+  market_enterprise_value: number;
+  current_fcf_yield: number;
+  forecast_years: number;
+  scenarios: ValuationScenarioResult[];
+  probability_weighted_fair_value: number;
+  probability_weighted_upside_downside: number;
+  reverse_dcf: {
+    discount_rate: number;
+    terminal_growth: number;
+    forecast_years: number;
+    required_annual_fcf_growth: number | null;
+    interpretation: string;
+  };
+  disclaimer: string;
+}
+
 export interface ResearchCapabilities {
   codex: {
     enabled: boolean;

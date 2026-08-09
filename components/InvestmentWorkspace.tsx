@@ -30,6 +30,7 @@ import type {
   ResearchResponse,
   TechnicalAnalysis,
 } from "@/lib/investment-os-types";
+import ValuationLab from "@/components/ValuationLab";
 
 type Message = {
   role: "user" | "assistant";
@@ -1086,6 +1087,10 @@ export default function InvestmentWorkspace() {
             loading={codexLoading}
             followUpLoading={followUpLoading}
           />
+        </div>
+
+        <div className="mt-3">
+          <ValuationLab ticker={normalizedTicker} currentPrice={analysis?.last_close ?? null} />
         </div>
 
         <div className="mt-3">
