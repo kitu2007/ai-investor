@@ -12,6 +12,10 @@ the FastAPI backend in the sibling `investment-os` directory and separates two k
 The UI shows the dossier's synthesis, bear/base/bull scenarios, independent views, disagreements, and
 sources. Reports remain local and outside Git.
 
+Saved dossier history is available per ticker. Select a completed version, write a focused question, and
+choose **Ask follow-up** to reuse that report's validated context. A follow-up is smaller than a full
+council dossier, but it still invokes Codex and consumes some of the signed-in account's allowance.
+
 ## Run locally
 
 First start PostgreSQL, migrations, and the backend from the sibling repository:

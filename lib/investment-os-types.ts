@@ -132,6 +132,42 @@ export interface ResearchRun {
   completed_at: string | null;
 }
 
+export interface FollowUpArtifact {
+  schema_version: "1.0";
+  ticker: string;
+  question: string;
+  generated_at: string;
+  as_of: string;
+  answer: string;
+  claims: Array<{
+    statement: string;
+    classification: "fact" | "inference" | "assumption" | "calculation";
+    source_ids: string[];
+  }>;
+  disagreements: string[];
+  limitations: string[];
+  next_questions: string[];
+  sources: ResearchSource[];
+  disclaimer: string;
+}
+
+export interface FollowUpRun {
+  id: string;
+  ticker: string;
+  company_name: string;
+  research_run_id: string;
+  question: string;
+  status: "queued" | "running" | "completed" | "failed";
+  runner: string;
+  artifact: FollowUpArtifact | null;
+  artifact_path: string | null;
+  markdown_path: string | null;
+  error: string | null;
+  requested_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
 export interface ResearchCapabilities {
   codex: {
     enabled: boolean;
