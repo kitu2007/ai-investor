@@ -8,8 +8,10 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Copy,
   Database,
   ExternalLink,
+  FileText,
   LoaderCircle,
   MessageSquareText,
   Plus,
@@ -18,6 +20,7 @@ import {
   ShieldCheck,
   Sparkles,
   Square,
+  X,
 } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -27,7 +30,9 @@ import type {
   FollowUpRun,
   InvestmentCompany,
   ResearchCapabilities,
+  ResearchPerspective,
   ResearchRun,
+  ResearchSource,
   ResearchResponse,
   TechnicalAnalysis,
 } from "@/lib/investment-os-types";
@@ -57,6 +62,309 @@ function friendlyFlag(value: string): string {
 
 function friendlyLabel(value: string): string {
   return value.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function DetailList({ title, items }: { title: string; items: string[] }) {
+  if (items.length === 0) return null;
+  return (
+    <section>
+      <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">{title}</h3>
+      <ul className="mt-2 space-y-2 text-xs leading-5 text-gray-300">
+        {items.map((item, index) => (
+          <li key={`${title}-${index}`} className="flex gap-2">
+            <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gray-600" />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function SourceReference({ source }: { source: ResearchSource | undefined }) {
+  if (!source) return <span className="text-gray-600">Unknown source</span>;
+  if (source.url.startsWith("http")) {
+    return (
+      <a
+        href={source.url}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center gap-1 text-blue-300 hover:text-blue-200"
+      >
+        {source.title} <ExternalLink size={10} />
+      </a>
+    );
+  }
+  return <span className="text-gray-500">{source.title} · local input</span>;
+}
+
+function PerspectiveDetail({
+  perspective,
+  sources,
+}: {
+  perspective: ResearchPerspective;
+  sources: ResearchSource[];
+}) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full border border-violet-400/25 bg-violet-400/10 px-2.5 py-1 text-[10px] font-semibold uppercase text-violet-200">
+            {friendlyLabel(perspective.stance)}
+          </span>
+          <span className="rounded-full border border-gray-700 px-2.5 py-1 text-[10px] text-gray-400">
+            {Math.round(perspective.confidence * 100)}% confidence
+          </span>
+          <span className="rounded-full border border-gray-700 px-2.5 py-1 text-[10px] text-gray-400">
+            {friendlyLabel(perspective.evidence_sufficiency)} evidence
+          </span>
+        </div>
+        <p className="mt-4 text-sm leading-6 text-gray-200">{perspective.summary}</p>
+      </div>
+
+      <section>
+        <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+          Evidence-backed claims
+        </h3>
+        <div className="mt-2 space-y-2">
+          {perspective.claims.map((claim, index) => (
+            <article key={`${claim.statement}-${index}`} className="rounded-xl border border-gray-800 bg-gray-950/60 p-3">
+              <div className="flex items-start gap-2">
+                <span className="shrink-0 rounded border border-blue-400/20 bg-blue-400/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-blue-300">
+                  {claim.classification}
+                </span>
+                <p className="text-xs leading-5 text-gray-300">{claim.statement}</p>
+              </div>
+              {claim.source_ids.length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-gray-800 pt-2 text-[10px]">
+                  {claim.source_ids.map((sourceId) => (
+                    <SourceReference
+                      key={sourceId}
+                      source={sources.find((source) => source.id === sourceId)}
+                    />
+                  ))}
+                </div>
+              ) : null}
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <DetailList title="Risks" items={perspective.risks} />
+        <DetailList title="What invalidates this view" items={perspective.invalidation_conditions} />
+        <DetailList title="Unresolved questions" items={perspective.unresolved_questions} />
+      </div>
+    </div>
+  );
+}
+
+function DossierModal({
+  run,
+  initialSection,
+  onClose,
+}: {
+  run: ResearchRun;
+  initialSection: string;
+  onClose: () => void;
+}) {
+  const artifact = run.artifact;
+  const [section, setSection] = useState(initialSection);
+  const [copyState, setCopyState] = useState<"idle" | "copying" | "copied" | "failed">("idle");
+
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+
+  if (!artifact) return null;
+  const selectedPerspective = artifact.perspectives.find((item) => item.agent === section);
+  const markdownUrl =
+    "/api/investment-os/research/run/" + encodeURIComponent(run.id) + "/markdown";
+
+  async function copyMarkdown() {
+    setCopyState("copying");
+    try {
+      const response = await fetch(markdownUrl);
+      if (!response.ok) throw new Error("Saved Markdown could not be loaded.");
+      await navigator.clipboard.writeText(await response.text());
+      setCopyState("copied");
+      window.setTimeout(() => setCopyState("idle"), 2000);
+    } catch {
+      setCopyState("failed");
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex bg-gray-950/90 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div className="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-gray-700 bg-gray-900 shadow-2xl">
+        <header className="flex items-start justify-between gap-4 border-b border-gray-800 px-5 py-4">
+          <div>
+            <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300">
+              <FileText size={13} /> Detailed Codex dossier
+            </div>
+            <h2 className="mt-1 text-lg font-semibold text-white">
+              {artifact.ticker} · {artifact.company_name}
+            </h2>
+            <p className="mt-1 max-w-3xl text-xs leading-5 text-gray-400">{artifact.question}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void copyMarkdown()}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-2 text-[11px] font-semibold text-gray-300 hover:bg-gray-800"
+            >
+              {copyState === "copied" ? <CheckCircle2 size={13} /> : <Copy size={13} />}
+              {copyState === "copying"
+                ? "Copying…"
+                : copyState === "copied"
+                  ? "Copied"
+                  : copyState === "failed"
+                    ? "Copy failed"
+                    : "Copy full .md"}
+            </button>
+            <a
+              href={markdownUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-violet-400/25 bg-violet-400/10 px-3 py-2 text-[11px] font-semibold text-violet-200 hover:bg-violet-400/15"
+            >
+              <ExternalLink size={13} /> Open saved .md
+            </a>
+            <button
+              type="button"
+              onClick={onClose}
+              className="grid h-9 w-9 place-items-center rounded-lg border border-gray-700 text-gray-400 hover:bg-gray-800 hover:text-white"
+              aria-label="Close detailed dossier"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </header>
+
+        <div className="grid min-h-0 flex-1 md:grid-cols-[220px_1fr]">
+          <nav className="overflow-y-auto border-r border-gray-800 bg-gray-950/45 p-3" aria-label="Dossier sections">
+            <button
+              type="button"
+              onClick={() => setSection("overview")}
+              className={
+                "w-full rounded-lg px-3 py-2 text-left text-xs font-medium " +
+                (section === "overview"
+                  ? "bg-violet-400/10 text-violet-200"
+                  : "text-gray-400 hover:bg-gray-800 hover:text-gray-200")
+              }
+            >
+              CIO overview
+            </button>
+            <div className="my-3 border-t border-gray-800" />
+            {artifact.perspectives.map((perspective) => (
+              <button
+                key={perspective.agent}
+                type="button"
+                onClick={() => setSection(perspective.agent)}
+                className={
+                  "mb-1 w-full rounded-lg px-3 py-2 text-left " +
+                  (section === perspective.agent
+                    ? "bg-violet-400/10 text-violet-200"
+                    : "text-gray-400 hover:bg-gray-800 hover:text-gray-200")
+                }
+              >
+                <span className="block text-xs font-medium">{friendlyLabel(perspective.agent)}</span>
+                <span className="mt-0.5 block text-[9px] text-gray-600">
+                  {friendlyLabel(perspective.stance)} · {Math.round(perspective.confidence * 100)}%
+                </span>
+              </button>
+            ))}
+          </nav>
+
+          <div className="overflow-y-auto p-5 md:p-7">
+            {selectedPerspective ? (
+              <>
+                <h2 className="mb-5 text-base font-semibold text-white">
+                  {friendlyLabel(selectedPerspective.agent)} analysis
+                </h2>
+                <PerspectiveDetail perspective={selectedPerspective} sources={artifact.sources} />
+              </>
+            ) : (
+              <div className="space-y-7">
+                <section>
+                  <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wide text-gray-500">
+                    <span>{friendlyLabel(artifact.synthesis.status)}</span>
+                    <span>·</span>
+                    <span>{Math.round(artifact.synthesis.confidence * 100)}% confidence</span>
+                    <span>·</span>
+                    <span>As of {artifact.as_of}</span>
+                  </div>
+                  <h2 className="mt-3 text-base font-semibold text-white">Executive synthesis</h2>
+                  <p className="mt-3 text-sm leading-6 text-gray-200">{artifact.executive_summary}</p>
+                  <p className="mt-3 text-sm leading-6 text-gray-400">{artifact.synthesis.summary}</p>
+                </section>
+
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  <DetailList title="What changed" items={artifact.synthesis.what_changed} />
+                  <DetailList title="Agreements" items={artifact.synthesis.agreements} />
+                  <DetailList title="Disagreements" items={artifact.synthesis.disagreements} />
+                  <DetailList title="Catalysts" items={artifact.synthesis.catalysts} />
+                  <DetailList title="Risks" items={artifact.synthesis.risks} />
+                  <DetailList title="Next questions" items={artifact.synthesis.next_questions} />
+                </div>
+
+                <section>
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+                    Scenarios
+                  </h3>
+                  <div className="mt-3 grid gap-3 lg:grid-cols-3">
+                    {artifact.scenarios.map((scenario) => (
+                      <article key={scenario.name} className="rounded-xl border border-gray-800 bg-gray-950/55 p-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold uppercase text-gray-300">{scenario.name}</span>
+                          <span className="text-sm font-semibold text-violet-200">
+                            {Math.round(scenario.probability * 100)}%
+                          </span>
+                        </div>
+                        <p className="mt-3 text-xs leading-5 text-gray-300">{scenario.summary}</p>
+                        <p className="mt-3 text-[10px] leading-4 text-gray-500">{scenario.valuation_note}</p>
+                        <ul className="mt-3 space-y-1 text-[10px] leading-4 text-gray-500">
+                          {scenario.assumptions.map((assumption) => (
+                            <li key={assumption}>• {assumption}</li>
+                          ))}
+                        </ul>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
+                    Complete source list
+                  </h3>
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {artifact.sources.map((source) => (
+                      <div key={source.id} className="rounded-lg border border-gray-800 bg-gray-950/55 p-3 text-[10px] leading-4">
+                        <SourceReference source={source} />
+                        <div className="mt-1 text-gray-600">
+                          {source.publisher} · {source.published_at || "date unavailable"} · {source.source_type}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {run.markdown_path ? (
+                  <p className="border-t border-gray-800 pt-4 font-mono text-[10px] text-gray-600">
+                    Saved locally: investment-os/{run.markdown_path}
+                  </p>
+                ) : null}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {
@@ -249,13 +557,15 @@ function ResearchPanel({
   followUpLoading: boolean;
 }) {
   const artifact = run?.artifact;
+  const [detailSection, setDetailSection] = useState<string | null>(null);
   const completedHistory = history.filter((item) => item.status === "completed" && item.artifact);
   const codexReady = Boolean(
     capabilities?.codex.enabled && capabilities.codex.installed && capabilities.codex.authenticated,
   );
 
   return (
-    <section className="rounded-xl border border-violet-400/20 bg-violet-400/[0.04] p-4">
+    <>
+      <section className="rounded-xl border border-violet-400/20 bg-violet-400/[0.04] p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs font-semibold text-violet-200">
           <Sparkles size={14} /> Codex research dossier
@@ -330,7 +640,28 @@ function ResearchPanel({
               </span>
             </div>
             <p className="mt-2 text-xs leading-5 text-gray-300">{artifact.executive_summary}</p>
-            <p className="mt-2 text-[10px] text-gray-600">As of {artifact.as_of}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDetailSection("overview")}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-[10px] font-semibold text-white hover:bg-violet-500"
+              >
+                <FileText size={12} /> Read full dossier
+              </button>
+              <a
+                href={
+                  "/api/investment-os/research/run/" +
+                  encodeURIComponent(run.id) +
+                  "/markdown"
+                }
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-2 text-[10px] font-semibold text-gray-300 hover:bg-gray-800"
+              >
+                <ExternalLink size={11} /> Open saved .md
+              </a>
+              <span className="ml-auto text-[10px] text-gray-600">As of {artifact.as_of}</span>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-1.5">
@@ -357,8 +688,21 @@ function ResearchPanel({
                       {friendlyLabel(perspective.stance)} · {Math.round(perspective.confidence * 100)}%
                     </span>
                   </summary>
-                  <div className="border-t border-gray-800 px-3 py-2 text-[10px] leading-4 text-gray-500">
-                    {perspective.summary}
+                  <div className="border-t border-gray-800 px-3 py-2">
+                    <p className="text-[10px] leading-4 text-gray-500">{perspective.summary}</p>
+                    <div className="mt-2 flex items-center justify-between gap-2 border-t border-gray-800 pt-2 text-[9px] text-gray-600">
+                      <span>
+                        {perspective.claims.length} claims · {perspective.risks.length} risks ·{" "}
+                        {perspective.invalidation_conditions.length} invalidation tests
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setDetailSection(perspective.agent)}
+                        className="shrink-0 font-semibold text-violet-300 hover:text-violet-200"
+                      >
+                        Read details
+                      </button>
+                    </div>
                   </div>
                 </details>
               ))}
@@ -478,10 +822,19 @@ function ResearchPanel({
         </div>
       ) : null}
 
-      <div className="mt-3 border-t border-violet-400/10 pt-3 text-[9px] leading-4 text-gray-600">
-        ChatGPT/Codex sign-in · no project API key · local reports stay outside Git
-      </div>
-    </section>
+        <div className="mt-3 border-t border-violet-400/10 pt-3 text-[9px] leading-4 text-gray-600">
+          ChatGPT/Codex sign-in · no project API key · local reports stay outside Git
+        </div>
+      </section>
+      {detailSection && run?.artifact ? (
+        <DossierModal
+          key={`${run.id}-${detailSection}`}
+          run={run}
+          initialSection={detailSection}
+          onClose={() => setDetailSection(null)}
+        />
+      ) : null}
+    </>
   );
 }
 

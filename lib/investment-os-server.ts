@@ -39,6 +39,26 @@ export async function investmentOsRequest<T>(
   return (await response.json()) as T;
 }
 
+export async function investmentOsTextRequest(path: string): Promise<string> {
+  const response = await fetch(API_URL + path, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  if (!response.ok) {
+    let detail = response.statusText;
+    try {
+      const body = (await response.json()) as { detail?: string };
+      detail = body.detail ?? detail;
+    } catch {
+      // Keep the HTTP status text when the backend did not return JSON.
+    }
+    throw new InvestmentOsApiError(detail, response.status);
+  }
+
+  return response.text();
+}
+
 export function publicError(error: unknown): {
   message: string;
   status: number;

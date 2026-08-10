@@ -11,7 +11,10 @@ the FastAPI backend in the sibling `investment-os` directory and separates two k
   **Start Codex analysis** is pressed. Queued or running requests can be cancelled from the same control.
 
 The UI shows the dossier's synthesis, bear/base/bull scenarios, independent views, disagreements, and
-sources. Reports remain local and outside Git.
+sources. Choose **Read full dossier** for the complete Evidence, Valuation, Bear, Buffett, Munger,
+Fisher, Asymmetric Growth, Technical/Momentum, and Macro/Industry reasoning. Each detailed view includes
+cited claims, risks, invalidation conditions, and unresolved questions. The exact saved Markdown can be
+opened or copied from that reader. Reports remain local and outside Git.
 
 Saved dossier history is available per ticker. Select a completed version, write a focused question, and
 choose **Ask follow-up** to reuse that report's validated context. A follow-up is smaller than a full
