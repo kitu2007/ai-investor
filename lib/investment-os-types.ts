@@ -218,11 +218,114 @@ export interface ResearchCapabilities {
     authentication: string;
   };
   api_key_required: boolean;
+  durable_jobs?: boolean;
   independent_council: {
     default_agents: number;
     maximum_codex_calls: number;
     explicit_confirmation_required: boolean;
   };
+}
+
+export interface SourceFreshness {
+  source_type: string;
+  document_count: number;
+  latest_published_at: string | null;
+  latest_retrieved_at: string | null;
+  stale_after_days: number;
+  status: "current" | "stale" | "missing";
+}
+
+export interface ProviderDataStatus {
+  ticker: string;
+  sec_cik: string | null;
+  source_document_count: number;
+  financial_fact_count: number;
+  market_price_count: number;
+  last_sec_retrieved_at: string | null;
+  last_market_retrieved_at: string | null;
+  stale: boolean;
+  stale_after_hours: number;
+  sources: SourceFreshness[];
+}
+
+export interface WatchEvent {
+  id: string;
+  event_date: string;
+  category: string;
+  classification: "fact" | "inference" | "assumption" | "calculation";
+  impact: "supports" | "contradicts" | "neutral";
+  material: boolean;
+  title: string;
+  summary: string;
+  source_url: string | null;
+  created_at: string;
+}
+
+export interface WatchRecord {
+  id: string;
+  ticker: string;
+  status: "active" | "triggered" | "ready_for_research" | "closed";
+  quality_thesis: string;
+  valuation_concern: string;
+  triggers: string[];
+  review_date: string;
+  needs_review: boolean;
+  events: WatchEvent[];
+}
+
+export interface ReviewReminder {
+  kind: "decision_journal" | "watch";
+  reference_id: string;
+  ticker: string;
+  title: string;
+  review_date: string;
+  days_until: number;
+  status: "triggered" | "overdue" | "due" | "upcoming";
+  reason: string;
+}
+
+export interface ReviewReminderSummary {
+  as_of: string;
+  horizon_days: number;
+  overdue_count: number;
+  due_count: number;
+  triggered_count: number;
+  items: ReviewReminder[];
+}
+
+export interface CompanyComparison {
+  generated_at: string;
+  portfolio: { portfolio_id: string; snapshot_id: string; as_of: string } | null;
+  candidates: Array<{
+    ticker: string;
+    company_name: string;
+    research: {
+      status: string;
+      confidence: number;
+      executive_summary: string;
+      source_count: number;
+    } | null;
+    cio: {
+      ownership_action: string;
+      confidence: number;
+      evidence_sufficiency: string;
+      executive_summary: string;
+      expected_value_multiple: number | null;
+      conditions_to_act: string[];
+      invalidation_conditions: string[];
+    } | null;
+    current_portfolio_weight: number;
+    economic_exposures: string[];
+    overlapping_exposure_weights: Record<string, number>;
+    maximum_overlap_weight: number;
+    source_freshness: SourceFreshness[];
+    open_watch_status: string | null;
+    next_step: string;
+    gaps: string[];
+  }>;
+  allocation_review_order: string[];
+  method: string[];
+  disclaimer: string;
 }
 
 export interface IndustryDocumentSummary {

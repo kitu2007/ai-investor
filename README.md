@@ -23,6 +23,13 @@ matching passages across the whole local library. Reading and searching these fi
 does not call Codex or require an API key. The backend exposes only an explicit document allowlist rather
 than accepting arbitrary local paths.
 
+The **Decision Tools** workspace turns the latest evidence and portfolio workflow into one non-technical
+screen. It shows SEC, transcript, news, and price freshness; provides an explicit SEC refresh and curated
+transcript/news import; creates and reviews exceptional-business/price-concern watches; shows triggered,
+due, and overdue reviews; and compares two to eight companies using saved dossiers, CIO scenarios, current
+portfolio weights, and overlapping economic exposures. These reads and deterministic comparisons do not
+start Codex. Only the existing explicit research and council controls invoke a model.
+
 Saved dossier history is available per ticker. Select a completed version, write a focused question, and
 choose **Ask follow-up** to reuse that report's validated context. A follow-up is smaller than a full
 council dossier, but it still invokes Codex and consumes some of the signed-in account's allowance.
@@ -70,6 +77,7 @@ cd ../investment-os
 make db-up
 make migrate
 make dev
+make worker
 ```
 
 In another terminal, install and run this UI:
@@ -80,7 +88,9 @@ npm run dev
 ```
 
 Open [http://localhost:3000/research](http://localhost:3000/research) for company work or
-[http://localhost:3000/industries](http://localhost:3000/industries) for the searchable industry library.
+[http://localhost:3000/decisions](http://localhost:3000/decisions) for evidence, watches, reminders, and
+company comparison. Open [http://localhost:3000/industries](http://localhost:3000/industries) for the
+searchable industry library.
 The backend defaults to
 `http://127.0.0.1:8000`; set `INVESTMENT_OS_API_URL` locally only if that changes.
 
