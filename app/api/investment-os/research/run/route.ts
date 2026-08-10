@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { priceHistory } from "@/lib/investment-os-market";
+import { persistPriceHistory, priceHistory } from "@/lib/investment-os-market";
 import { investmentOsRequest, publicError } from "@/lib/investment-os-server";
 import type { ResearchRun, TechnicalAnalysis } from "@/lib/investment-os-types";
 
@@ -23,6 +23,10 @@ export async function POST(request: NextRequest) {
         { status: 404 },
       );
     }
+    await Promise.all([
+      persistPriceHistory(ticker, prices),
+      persistPriceHistory("SPY", benchmark),
+    ]);
     const technical = await investmentOsRequest<TechnicalAnalysis>("/api/v1/technical/analyze", {
       method: "POST",
       body: JSON.stringify({ ticker, prices, benchmark_prices: benchmark }),

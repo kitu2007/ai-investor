@@ -4,7 +4,8 @@ This private Next.js application is the local, non-technical workspace for Inves
 the FastAPI backend in the sibling `investment-os` directory and separates two kinds of work:
 
 - **Quick signals** fetch daily ticker and SPY prices, then calculate moving averages, RSI, MACD,
-  drawdown, momentum, and relative strength without an LLM.
+  drawdown, momentum, and relative strength without an LLM. The same provider-labelled observations are
+  persisted in the local backend with source URL, retrieval time, and idempotent date keys.
 - **Request Codex** sends the question and authoritative technical snapshot to the local backend, which
   creates a validated, saved, multi-perspective research dossier using the Mac's existing ChatGPT/Codex
   sign-in. No project API key is required. The first click opens a review step; nothing is queued until
