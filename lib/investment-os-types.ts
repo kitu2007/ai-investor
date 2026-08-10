@@ -305,3 +305,98 @@ export interface CouncilRun {
   agent_runs: CouncilAgentRun[];
   estimated_codex_calls: number;
 }
+
+export interface PortfolioPosition {
+  id: number;
+  snapshot_id: string;
+  ticker: string;
+  name: string | null;
+  market_value: number;
+  weight: number;
+  quantity: number | null;
+  price: number | null;
+  sleeve: string;
+  sector: string;
+  themes: string[];
+  economic_exposures: string[];
+  currency: string;
+}
+
+export interface PortfolioSnapshot {
+  id: string;
+  portfolio_id: string;
+  as_of: string;
+  import_source: "local_csv";
+  file_hash: string;
+  total_value: number;
+  cash_value: number;
+  position_count: number;
+  created_at: string;
+  positions: PortfolioPosition[];
+}
+
+export interface PrivatePortfolio {
+  id: string;
+  name: string;
+  base_currency: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PortfolioImportResult {
+  portfolio: PrivatePortfolio;
+  snapshot: PortfolioSnapshot;
+  created: boolean;
+}
+
+export interface AllocationScenario {
+  name: "bear" | "base" | "bull";
+  probability: number;
+  value_multiple: number;
+}
+
+export interface AllocationWarning {
+  severity: "info" | "warning" | "blocker";
+  code: string;
+  message: string;
+}
+
+export interface AllocationAnalysis {
+  id: string;
+  snapshot_id: string;
+  policy_id: string;
+  candidate_ticker: string;
+  request: {
+    snapshot_id: string;
+    policy_id: string | null;
+    candidate_ticker: string;
+    candidate_name: string | null;
+    target_weight: number;
+    sleeve: string;
+    sector: string;
+    themes: string[];
+    economic_exposures: string[];
+    scenarios: AllocationScenario[];
+    permanent_loss_fraction: number;
+  };
+  result: {
+    feasible: boolean;
+    classification: "within_policy" | "policy_warning" | "insufficient_cash";
+    candidate_ticker: string;
+    current_weight: number;
+    target_weight: number;
+    trade_value: number;
+    pre_cash_weight: number;
+    post_cash_weight: number;
+    policy_ceiling_weight: number;
+    meaningful_bull_weight: number | null;
+    expected_portfolio_contribution: number;
+    permanent_loss_contribution: number;
+    scenario_contributions: Array<AllocationScenario & { portfolio_contribution: number }>;
+    pre_exposures: Record<string, Record<string, number>>;
+    post_exposures: Record<string, Record<string, number>>;
+    warnings: AllocationWarning[];
+    disclaimer: string;
+  };
+  created_at: string;
+}

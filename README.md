@@ -33,6 +33,17 @@ The **Deterministic valuation lab** accepts explicit normalized free cash flow, 
 and bear/base/bull assumptions. It calculates DCF values, a probability-weighted result, and reverse-DCF
 implied growth without invoking a model. Example rates are visible starting points, not company facts.
 
+The collapsed **Private portfolio & allocation** workspace is also model-free. It imports only a CSV the
+user explicitly selects; it never reads the other AI-investor folders automatically. Required columns are
+`ticker` and `market_value`. Optional approved columns are `name`, `quantity`, `price`, `sleeve`, `sector`,
+`themes`, `economic_exposures`, and `currency`; every other column is rejected so account identifiers and
+tax-lot details do not enter the application. The snapshot remains in local PostgreSQL and outside Git.
+
+After import, enter a candidate weight, sleeve, sector, overlapping themes/economic drivers, and explicit
+bear/base/bull probabilities and value multiples. The workspace calculates cash before/after, the strictest
+policy ceiling, exposure blockers, scenario contribution, and permanent-loss impact using deterministic
+backend code. It does not invoke Codex, use an LLM API key, or place a trade.
+
 ## Run locally
 
 First start PostgreSQL, migrations, and the backend from the sibling repository:
