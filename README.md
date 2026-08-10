@@ -46,6 +46,9 @@ npm run dev
 Open [http://localhost:3000/research](http://localhost:3000/research). The backend defaults to
 `http://127.0.0.1:8000`; set `INVESTMENT_OS_API_URL` locally only if that changes.
 
+For normal use, the sibling backend repository provides `make stack`, which starts PostgreSQL, applies
+migrations, and runs both services. Use `make check-stack` there for a model-free health check.
+
 Quick signals and saved research reads do not use Codex. Each explicit **Request Codex** action consumes
 some of the allowance attached to the signed-in Codex account.
 
