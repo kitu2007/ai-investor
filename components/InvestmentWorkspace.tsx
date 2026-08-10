@@ -666,7 +666,7 @@ function CompanyPanel({
 
 export default function InvestmentWorkspace() {
   const [ticker, setTicker] = useState("AAPL");
-  const [question, setQuestion] = useState(() => defaultResearchQuestion("AAPL"));
+  const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<TechnicalAnalysis | null>(null);
@@ -696,11 +696,6 @@ export default function InvestmentWorkspace() {
 
   function updateTicker(value: string) {
     const nextTicker = value.toUpperCase().replace(/[^A-Z.-]/g, "").slice(0, 16);
-    setQuestion((currentQuestion) =>
-      currentQuestion === defaultResearchQuestion(normalizedTicker)
-        ? defaultResearchQuestion(nextTicker)
-        : currentQuestion,
-    );
     setTicker(nextTicker);
     setSessionId(null);
     setCodexReview(null);
@@ -1083,7 +1078,7 @@ export default function InvestmentWorkspace() {
                   }
                 }}
                 rows={2}
-                placeholder="Ask about momentum, risk, drawdown, or the investment thesis…"
+                placeholder={defaultResearchQuestion(normalizedTicker)}
                 className="min-h-12 flex-1 resize-none bg-transparent px-2 py-1 text-sm leading-5 text-white outline-none placeholder:text-gray-600"
                 aria-label="Research question"
               />
