@@ -120,7 +120,7 @@ export interface ResearchRun {
   ticker: string;
   company_name: string;
   question: string;
-  status: "queued" | "running" | "completed" | "failed";
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
   runner: string;
   technical_snapshot: TechnicalAnalysis | null;
   artifact: ResearchArtifact | null;
@@ -157,7 +157,7 @@ export interface FollowUpRun {
   company_name: string;
   research_run_id: string;
   question: string;
-  status: "queued" | "running" | "completed" | "failed";
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
   runner: string;
   artifact: FollowUpArtifact | null;
   artifact_path: string | null;

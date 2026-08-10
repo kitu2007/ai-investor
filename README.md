@@ -7,7 +7,8 @@ the FastAPI backend in the sibling `investment-os` directory and separates two k
   drawdown, momentum, and relative strength without an LLM.
 - **Request Codex** sends the question and authoritative technical snapshot to the local backend, which
   creates a validated, saved, multi-perspective research dossier using the Mac's existing ChatGPT/Codex
-  sign-in. No project API key is required.
+  sign-in. No project API key is required. The first click opens a review step; nothing is queued until
+  **Start Codex analysis** is pressed. Queued or running requests can be cancelled from the same control.
 
 The UI shows the dossier's synthesis, bear/base/bull scenarios, independent views, disagreements, and
 sources. Reports remain local and outside Git.
@@ -15,6 +16,7 @@ sources. Reports remain local and outside Git.
 Saved dossier history is available per ticker. Select a completed version, write a focused question, and
 choose **Ask follow-up** to reuse that report's validated context. A follow-up is smaller than a full
 council dossier, but it still invokes Codex and consumes some of the signed-in account's allowance.
+Active follow-ups can also be cancelled.
 
 The **Deterministic valuation lab** accepts explicit normalized free cash flow, diluted shares, net debt,
 and bear/base/bull assumptions. It calculates DCF values, a probability-weighted result, and reverse-DCF

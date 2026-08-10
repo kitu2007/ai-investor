@@ -17,6 +17,7 @@ import {
   RefreshCw,
   ShieldCheck,
   Sparkles,
+  Square,
 } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -676,13 +677,22 @@ export default function InvestmentWorkspace() {
   const [researchRun, setResearchRun] = useState<ResearchRun | null>(null);
   const [researchHistory, setResearchHistory] = useState<ResearchRun[]>([]);
   const [followUpRun, setFollowUpRun] = useState<FollowUpRun | null>(null);
+  const [codexReview, setCodexReview] = useState<{ ticker: string; question: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [codexLoading, setCodexLoading] = useState(false);
   const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [followUpCancelLoading, setFollowUpCancelLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
   const [error, setError] = useState("");
 
   const normalizedTicker = useMemo(() => ticker.trim().toUpperCase(), [ticker]);
+  const researchActive = Boolean(
+    researchRun && ["queued", "running"].includes(researchRun.status),
+  );
+  const followUpActive = Boolean(
+    followUpRun && ["queued", "running"].includes(followUpRun.status),
+  );
 
   function updateTicker(value: string) {
     const nextTicker = value.toUpperCase().replace(/[^A-Z.-]/g, "").slice(0, 16);
@@ -693,6 +703,7 @@ export default function InvestmentWorkspace() {
     );
     setTicker(nextTicker);
     setSessionId(null);
+    setCodexReview(null);
   }
 
   const checkStatus = useCallback(async () => {
@@ -731,7 +742,12 @@ export default function InvestmentWorkspace() {
         .then((history) => {
           if (!active) return;
           setResearchHistory(history);
-          setResearchRun(history.find((item) => item.status === "completed") ?? null);
+          const selectedRun =
+            history.find((item) => ["queued", "running"].includes(item.status)) ??
+            history.find((item) => item.status === "completed") ??
+            null;
+          setResearchRun(selectedRun);
+          setCodexLoading(Boolean(selectedRun && ["queued", "running"].includes(selectedRun.status)));
           setFollowUpRun(null);
         })
         .catch(() => {
@@ -757,7 +773,7 @@ export default function InvestmentWorkspace() {
         .then((run) => {
           if (!active) return;
           setResearchRun(run);
-          if (run.status === "completed" || run.status === "failed") {
+          if (["completed", "failed", "cancelled"].includes(run.status)) {
             setCodexLoading(false);
             setResearchHistory((current) => [run, ...current.filter((item) => item.id !== run.id)]);
             window.clearInterval(interval);
@@ -783,7 +799,7 @@ export default function InvestmentWorkspace() {
         .then((run) => {
           if (!active) return;
           setFollowUpRun(run);
-          if (run.status === "completed" || run.status === "failed") {
+          if (["completed", "failed", "cancelled"].includes(run.status)) {
             setFollowUpLoading(false);
             window.clearInterval(interval);
             if (run.artifact) {
@@ -834,17 +850,24 @@ export default function InvestmentWorkspace() {
     }
   }
 
-  async function requestCodexResearch() {
+  function reviewCodexResearch() {
     if (!normalizedTicker || !question.trim()) return;
-    const prompt = question.trim();
+    setError("");
+    setCodexReview({ ticker: normalizedTicker, question: question.trim() });
+  }
+
+  async function requestCodexResearch() {
+    if (!codexReview) return;
+    const request = codexReview;
+    setCodexReview(null);
     setCodexLoading(true);
     setError("");
-    setMessages((current) => [...current, { role: "user", content: prompt }]);
+    setMessages((current) => [...current, { role: "user", content: request.question }]);
     try {
       const run = await jsonRequest<ResearchRun>("/api/investment-os/research/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker: normalizedTicker, question: prompt }),
+        body: JSON.stringify(request),
       });
       setResearchRun(run);
       setResearchHistory((current) => [run, ...current.filter((item) => item.id !== run.id)]);
@@ -862,6 +885,29 @@ export default function InvestmentWorkspace() {
       const message = reason instanceof Error ? reason.message : "Could not request Codex analysis.";
       setError(message);
       setCodexLoading(false);
+    }
+  }
+
+  async function cancelCodexResearch() {
+    if (!researchRun || !["queued", "running"].includes(researchRun.status)) return;
+    setCancelLoading(true);
+    setError("");
+    try {
+      const run = await jsonRequest<ResearchRun>(
+        "/api/investment-os/research/run/" + encodeURIComponent(researchRun.id) + "/cancel",
+        { method: "POST" },
+      );
+      setResearchRun(run);
+      setResearchHistory((current) => [run, ...current.filter((item) => item.id !== run.id)]);
+      setCodexLoading(false);
+      setMessages((current) => [
+        ...current,
+        { role: "assistant", content: "Codex analysis was cancelled. No dossier was saved." },
+      ]);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not cancel Codex analysis.");
+    } finally {
+      setCancelLoading(false);
     }
   }
 
@@ -893,6 +939,30 @@ export default function InvestmentWorkspace() {
       const message = reason instanceof Error ? reason.message : "Could not request the follow-up.";
       setError(message);
       setFollowUpLoading(false);
+    }
+  }
+
+  async function cancelCodexFollowUp() {
+    if (!followUpRun || !["queued", "running"].includes(followUpRun.status)) return;
+    setFollowUpCancelLoading(true);
+    setError("");
+    try {
+      const run = await jsonRequest<FollowUpRun>(
+        "/api/investment-os/research/followup/" +
+          encodeURIComponent(followUpRun.id) +
+          "/cancel",
+        { method: "POST" },
+      );
+      setFollowUpRun(run);
+      setFollowUpLoading(false);
+      setMessages((current) => [
+        ...current,
+        { role: "assistant", content: "The Codex follow-up was cancelled." },
+      ]);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not cancel the Codex follow-up.");
+    } finally {
+      setFollowUpCancelLoading(false);
     }
   }
 
@@ -1002,7 +1072,10 @@ export default function InvestmentWorkspace() {
               </div>
               <textarea
                 value={question}
-                onChange={(event) => setQuestion(event.target.value)}
+                onChange={(event) => {
+                  setQuestion(event.target.value);
+                  setCodexReview(null);
+                }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
@@ -1023,48 +1096,118 @@ export default function InvestmentWorkspace() {
                   {loading ? <LoaderCircle size={14} className="animate-spin" /> : <Activity size={14} />}
                   Quick signals
                 </button>
-                <button
-                  type="button"
-                  onClick={() => void requestCodexResearch()}
-                  disabled={
-                    codexLoading ||
-                    !normalizedTicker ||
-                    !question.trim() ||
-                    !capabilities?.codex.enabled ||
-                    !capabilities.codex.installed ||
-                    !capabilities.codex.authenticated
-                  }
-                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3 text-[11px] font-semibold text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Request Codex analysis"
-                >
-                  {codexLoading ? (
-                    <LoaderCircle size={14} className="animate-spin" />
-                  ) : (
+                {researchActive ? (
+                  <button
+                    type="button"
+                    onClick={() => void cancelCodexResearch()}
+                    disabled={cancelLoading}
+                    className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-rose-400/25 bg-rose-400/10 px-3 text-[11px] font-semibold text-rose-200 hover:bg-rose-400/15 disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Cancel Codex analysis"
+                  >
+                    {cancelLoading ? (
+                      <LoaderCircle size={14} className="animate-spin" />
+                    ) : (
+                      <Square size={12} />
+                    )}
+                    Cancel Codex
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={reviewCodexResearch}
+                    disabled={
+                      codexLoading ||
+                      !normalizedTicker ||
+                      !question.trim() ||
+                      !capabilities?.codex.enabled ||
+                      !capabilities.codex.installed ||
+                      !capabilities.codex.authenticated
+                    }
+                    className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3 text-[11px] font-semibold text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Review Codex analysis request"
+                  >
                     <Sparkles size={14} />
-                  )}
-                  Request Codex
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void requestCodexFollowUp()}
-                  disabled={
-                    followUpLoading ||
-                    researchRun?.status !== "completed" ||
-                    !question.trim() ||
-                    !capabilities?.codex.authenticated
-                  }
-                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-blue-400/25 bg-blue-400/10 px-3 text-[11px] font-semibold text-blue-200 hover:bg-blue-400/15 disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Ask a follow-up using saved research"
-                >
-                  {followUpLoading ? (
-                    <LoaderCircle size={14} className="animate-spin" />
-                  ) : (
-                    <MessageSquareText size={14} />
-                  )}
-                  Ask follow-up
-                </button>
+                    Request Codex
+                  </button>
+                )}
+                {followUpActive ? (
+                  <button
+                    type="button"
+                    onClick={() => void cancelCodexFollowUp()}
+                    disabled={followUpCancelLoading}
+                    className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-rose-400/25 bg-rose-400/10 px-3 text-[11px] font-semibold text-rose-200 hover:bg-rose-400/15 disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Cancel Codex follow-up"
+                  >
+                    {followUpCancelLoading ? (
+                      <LoaderCircle size={14} className="animate-spin" />
+                    ) : (
+                      <Square size={12} />
+                    )}
+                    Cancel follow-up
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void requestCodexFollowUp()}
+                    disabled={
+                      followUpLoading ||
+                      researchRun?.status !== "completed" ||
+                      !question.trim() ||
+                      !capabilities?.codex.authenticated
+                    }
+                    className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-blue-400/25 bg-blue-400/10 px-3 text-[11px] font-semibold text-blue-200 hover:bg-blue-400/15 disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Ask a follow-up using saved research"
+                  >
+                    {followUpLoading ? (
+                      <LoaderCircle size={14} className="animate-spin" />
+                    ) : (
+                      <MessageSquareText size={14} />
+                    )}
+                    Ask follow-up
+                  </button>
+                )}
               </div>
             </div>
+            {codexReview ? (
+              <div
+                role="dialog"
+                aria-label="Review Codex request"
+                className="mx-auto mt-3 max-w-3xl rounded-xl border border-violet-400/25 bg-violet-400/[0.06] p-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-300">
+                      Review before starting Codex
+                    </p>
+                    <p className="mt-1 text-[10px] text-gray-500">
+                      Nothing has been queued yet. This run will use your Codex allowance.
+                    </p>
+                  </div>
+                  <span className="rounded-md border border-gray-700 bg-gray-950 px-2 py-1 text-[10px] font-bold text-blue-300">
+                    {codexReview.ticker}
+                  </span>
+                </div>
+                <p className="mt-3 rounded-lg border border-gray-800 bg-gray-950/70 px-3 py-2 text-xs leading-5 text-gray-200">
+                  {codexReview.question}
+                </p>
+                <div className="mt-3 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCodexReview(null)}
+                    className="rounded-lg border border-gray-700 px-3 py-2 text-[11px] font-semibold text-gray-300 hover:bg-gray-800"
+                  >
+                    Edit question
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void requestCodexResearch()}
+                    className="rounded-lg bg-violet-600 px-3 py-2 text-[11px] font-semibold text-white hover:bg-violet-500"
+                  >
+                    Start Codex analysis
+                  </button>
+                </div>
+              </div>
+            ) : null}
             {error ? <p className="mx-auto mt-2 max-w-3xl text-xs text-rose-300">{error}</p> : null}
             <p className="mx-auto mt-2 max-w-3xl text-center text-[10px] text-gray-700">
               Quick signals use no model. Full dossiers and targeted follow-ups use your Codex allowance.
