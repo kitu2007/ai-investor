@@ -1,5 +1,7 @@
 import "server-only";
 
+import { investmentOsRequest } from "@/lib/investment-os-server";
+
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const YahooFinance = require("yahoo-finance2").default;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,4 +33,17 @@ export async function priceHistory(ticker: string): Promise<PricePoint[]> {
         close: quote.adjclose ?? quote.close,
       }),
     );
+}
+
+export async function persistPriceHistory(ticker: string, prices: PricePoint[]): Promise<void> {
+  if (prices.length === 0) return;
+  await investmentOsRequest("/api/v1/providers/market/prices/import", {
+    method: "POST",
+    body: JSON.stringify({
+      ticker,
+      provider: "yahoo-finance2",
+      source_url: `https://finance.yahoo.com/quote/${encodeURIComponent(ticker)}/history/`,
+      prices,
+    }),
+  });
 }

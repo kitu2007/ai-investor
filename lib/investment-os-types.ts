@@ -218,4 +218,358 @@ export interface ResearchCapabilities {
     authentication: string;
   };
   api_key_required: boolean;
+  durable_jobs?: boolean;
+  independent_council: {
+    default_agents: number;
+    maximum_codex_calls: number;
+    explicit_confirmation_required: boolean;
+  };
+}
+
+export interface SourceFreshness {
+  source_type: string;
+  document_count: number;
+  latest_published_at: string | null;
+  latest_retrieved_at: string | null;
+  stale_after_days: number;
+  status: "current" | "stale" | "missing";
+}
+
+export interface ProviderDataStatus {
+  ticker: string;
+  sec_cik: string | null;
+  source_document_count: number;
+  financial_fact_count: number;
+  market_price_count: number;
+  last_sec_retrieved_at: string | null;
+  last_market_retrieved_at: string | null;
+  stale: boolean;
+  stale_after_hours: number;
+  sources: SourceFreshness[];
+}
+
+export interface WatchEvent {
+  id: string;
+  event_date: string;
+  category: string;
+  classification: "fact" | "inference" | "assumption" | "calculation";
+  impact: "supports" | "contradicts" | "neutral";
+  material: boolean;
+  title: string;
+  summary: string;
+  source_url: string | null;
+  created_at: string;
+}
+
+export interface WatchRecord {
+  id: string;
+  ticker: string;
+  status: "active" | "triggered" | "ready_for_research" | "closed";
+  quality_thesis: string;
+  valuation_concern: string;
+  triggers: string[];
+  review_date: string;
+  needs_review: boolean;
+  events: WatchEvent[];
+}
+
+export interface ReviewReminder {
+  kind: "decision_journal" | "watch";
+  reference_id: string;
+  ticker: string;
+  title: string;
+  review_date: string;
+  days_until: number;
+  status: "triggered" | "overdue" | "due" | "upcoming";
+  reason: string;
+}
+
+export interface ReviewReminderSummary {
+  as_of: string;
+  horizon_days: number;
+  overdue_count: number;
+  due_count: number;
+  triggered_count: number;
+  items: ReviewReminder[];
+}
+
+export interface CompanyComparison {
+  generated_at: string;
+  portfolio: { portfolio_id: string; snapshot_id: string; as_of: string } | null;
+  candidates: Array<{
+    ticker: string;
+    company_name: string;
+    research: {
+      status: string;
+      confidence: number;
+      executive_summary: string;
+      source_count: number;
+    } | null;
+    cio: {
+      ownership_action: string;
+      confidence: number;
+      evidence_sufficiency: string;
+      executive_summary: string;
+      expected_value_multiple: number | null;
+      conditions_to_act: string[];
+      invalidation_conditions: string[];
+    } | null;
+    current_portfolio_weight: number;
+    economic_exposures: string[];
+    overlapping_exposure_weights: Record<string, number>;
+    maximum_overlap_weight: number;
+    source_freshness: SourceFreshness[];
+    open_watch_status: string | null;
+    next_step: string;
+    gaps: string[];
+  }>;
+  allocation_review_order: string[];
+  method: string[];
+  disclaimer: string;
+}
+
+export interface IndustryDocumentSummary {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  updated_at: string;
+}
+
+export interface IndustryDocument extends IndustryDocumentSummary {
+  content: string;
+}
+
+export interface IndustrySearchHit {
+  document_id: string;
+  title: string;
+  category: string;
+  snippet: string;
+  line_number: number;
+  matched_terms: string[];
+  score: number;
+}
+
+export interface IndustrySearchResponse {
+  query: string;
+  documents_searched: number;
+  hits: IndustrySearchHit[];
+}
+
+export interface CouncilAgentArtifact {
+  schema_version: "1.0";
+  ticker: string;
+  question: string;
+  context_hash: string;
+  prompt_version: "council-agent-v1";
+  generated_at: string;
+  as_of: string;
+  perspective: ResearchPerspective;
+  sources: ResearchSource[];
+}
+
+export interface CioSynthesisArtifact {
+  schema_version: "1.0" | "1.1";
+  ticker: string;
+  question: string;
+  context_hash: string;
+  prompt_version: "council-cio-v1" | "council-cio-v2";
+  generated_at: string;
+  as_of: string;
+  perspective_run_ids: string[];
+  ownership_action: string;
+  confidence: number;
+  evidence_sufficiency: string;
+  executive_summary: string;
+  key_claims: ResearchPerspective["claims"];
+  agreements: string[];
+  disagreements: string[];
+  conditions_to_act: string[];
+  invalidation_conditions: string[];
+  next_questions: string[];
+  scenarios: Array<
+    ResearchArtifact["scenarios"][number] & { value_multiple?: number | null }
+  >;
+  sources: ResearchSource[];
+  disclaimer: string;
+}
+
+export interface CouncilAgentRun {
+  id: string;
+  council_run_id: string;
+  agent: string;
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
+  runner: string;
+  contract_version: string;
+  prompt_version: string;
+  context_hash: string;
+  model_identifier: string | null;
+  artifact: CouncilAgentArtifact | null;
+  error: string | null;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface CouncilRun {
+  id: string;
+  ticker: string;
+  company_name: string;
+  question: string;
+  status:
+    | "queued"
+    | "running"
+    | "synthesizing"
+    | "completed"
+    | "partial"
+    | "failed"
+    | "cancelled";
+  runner: string;
+  requested_agents: string[];
+  technical_snapshot: TechnicalAnalysis | null;
+  context_hash: string;
+  cio_artifact: CioSynthesisArtifact | null;
+  artifact_path: string | null;
+  markdown_path: string | null;
+  error: string | null;
+  requested_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  agent_runs: CouncilAgentRun[];
+  estimated_codex_calls: number;
+}
+
+export interface CioAllocationDraft {
+  council_run_id: string;
+  ticker: string;
+  context_hash: string;
+  ownership_action: string;
+  confidence: number;
+  evidence_sufficiency: string;
+  generated_at: string;
+  scenarios: Array<
+    ResearchArtifact["scenarios"][number] & { value_multiple: number | null }
+  >;
+  invalidation_conditions: string[];
+  conditions_to_act: string[];
+  ready_for_allocation: boolean;
+  warnings: string[];
+}
+
+export interface PortfolioPosition {
+  id: number;
+  snapshot_id: string;
+  ticker: string;
+  name: string | null;
+  market_value: number;
+  weight: number;
+  quantity: number | null;
+  price: number | null;
+  sleeve: string;
+  sector: string;
+  themes: string[];
+  economic_exposures: string[];
+  currency: string;
+}
+
+export interface PortfolioSnapshot {
+  id: string;
+  portfolio_id: string;
+  as_of: string;
+  import_source: "local_csv";
+  file_hash: string;
+  total_value: number;
+  cash_value: number;
+  position_count: number;
+  created_at: string;
+  positions: PortfolioPosition[];
+}
+
+export interface PrivatePortfolio {
+  id: string;
+  name: string;
+  base_currency: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PortfolioImportResult {
+  portfolio: PrivatePortfolio;
+  snapshot: PortfolioSnapshot;
+  created: boolean;
+}
+
+export interface AllocationScenario {
+  name: "bear" | "base" | "bull";
+  probability: number;
+  value_multiple: number;
+}
+
+export interface AllocationWarning {
+  severity: "info" | "warning" | "blocker";
+  code: string;
+  message: string;
+}
+
+export interface AllocationAnalysis {
+  id: string;
+  snapshot_id: string;
+  policy_id: string;
+  council_run_id: string | null;
+  scenario_source: "manual" | "cio_approved";
+  candidate_ticker: string;
+  request: {
+    snapshot_id: string;
+    policy_id: string | null;
+    council_run_id: string | null;
+    scenario_source: "manual" | "cio_approved";
+    candidate_ticker: string;
+    candidate_name: string | null;
+    target_weight: number;
+    sleeve: string;
+    sector: string;
+    themes: string[];
+    economic_exposures: string[];
+    scenarios: AllocationScenario[];
+    permanent_loss_fraction: number;
+  };
+  result: {
+    feasible: boolean;
+    classification: "within_policy" | "policy_warning" | "insufficient_cash";
+    candidate_ticker: string;
+    current_weight: number;
+    target_weight: number;
+    trade_value: number;
+    pre_cash_weight: number;
+    post_cash_weight: number;
+    policy_ceiling_weight: number;
+    meaningful_bull_weight: number | null;
+    expected_portfolio_contribution: number;
+    permanent_loss_contribution: number;
+    scenario_contributions: Array<AllocationScenario & { portfolio_contribution: number }>;
+    pre_exposures: Record<string, Record<string, number>>;
+    post_exposures: Record<string, Record<string, number>>;
+    warnings: AllocationWarning[];
+    disclaimer: string;
+  };
+  created_at: string;
+}
+
+export interface DecisionJournalEntry {
+  id: string;
+  ticker: string;
+  company_id: number | null;
+  entry_type: "decision" | "review" | "thesis_update" | "postmortem";
+  action: "initiate" | "add" | "hold" | "trim" | "exit" | "watch" | "pass";
+  headline: string;
+  thesis: string;
+  rationale: string;
+  invalidation_conditions: string[];
+  decision_date: string;
+  review_date: string;
+  council_run_id: string | null;
+  allocation_analysis_id: string | null;
+  supersedes_entry_id: string | null;
+  decision_context: Record<string, unknown>;
+  created_at: string;
 }

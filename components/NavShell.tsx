@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BrainCircuit, TrendingUp } from "lucide-react";
+import { BrainCircuit, LibraryBig, Scale, TrendingUp } from "lucide-react";
 
 const TABS = [
   { href: "/",       label: "My Portfolio",    key: "portfolio" },
@@ -7,6 +7,8 @@ const TABS = [
   { href: "/fallen", label: "Fallen Angels",   key: "fallen"    },
   { href: "/rising", label: "Rising Angels",   key: "rising"    },
   { href: "/research", label: "Investment OS", key: "research", icon: BrainCircuit },
+  { href: "/decisions", label: "Decision Tools", key: "decisions", icon: Scale },
+  { href: "/industries", label: "Industry Research", key: "industries", icon: LibraryBig },
 ];
 
 interface Props {

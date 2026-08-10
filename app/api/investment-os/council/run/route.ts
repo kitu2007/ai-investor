@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { persistPriceHistory, priceHistory } from "@/lib/investment-os-market";
 import { investmentOsRequest, publicError } from "@/lib/investment-os-server";
-import type { ResearchRun, TechnicalAnalysis } from "@/lib/investment-os-types";
+import type { CouncilRun, TechnicalAnalysis } from "@/lib/investment-os-types";
 
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as { ticker?: string; question?: string };
@@ -31,11 +31,11 @@ export async function POST(request: NextRequest) {
       method: "POST",
       body: JSON.stringify({ ticker, prices, benchmark_prices: benchmark }),
     });
-    const run = await investmentOsRequest<ResearchRun>("/api/v1/research/runs", {
+    const council = await investmentOsRequest<CouncilRun>("/api/v1/councils", {
       method: "POST",
       body: JSON.stringify({ ticker, question, technical_snapshot: technical }),
     });
-    return NextResponse.json(run, { status: 202 });
+    return NextResponse.json(council, { status: 202 });
   } catch (error) {
     const failure = publicError(error);
     return NextResponse.json({ error: failure.message }, { status: failure.status });

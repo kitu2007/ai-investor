@@ -36,6 +36,8 @@ import type {
   ResearchResponse,
   TechnicalAnalysis,
 } from "@/lib/investment-os-types";
+import IndependentCouncilPanel from "@/components/IndependentCouncilPanel";
+import PrivatePortfolioPanel from "@/components/PrivatePortfolioPanel";
 import ValuationLab from "@/components/ValuationLab";
 
 type Message = {
@@ -1588,6 +1590,19 @@ export default function InvestmentWorkspace() {
             loading={codexLoading}
             followUpLoading={followUpLoading}
           />
+        </div>
+
+        <div className="mt-3">
+          <IndependentCouncilPanel
+            key={normalizedTicker}
+            ticker={normalizedTicker}
+            question={question}
+            capabilities={capabilities}
+          />
+        </div>
+
+        <div className="mt-3">
+          <PrivatePortfolioPanel key={normalizedTicker} ticker={normalizedTicker} />
         </div>
 
         <div className="mt-3">

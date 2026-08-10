@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { investmentOsRequest, publicError } from "@/lib/investment-os-server";
-import { priceHistory } from "@/lib/investment-os-market";
+import { persistPriceHistory, priceHistory } from "@/lib/investment-os-market";
 import type {
   EvidenceItem,
   InvestmentCompany,
@@ -53,6 +53,10 @@ export async function POST(request: NextRequest) {
         { status: 404 },
       );
     }
+    await Promise.all([
+      persistPriceHistory(ticker, prices),
+      persistPriceHistory("SPY", benchmark),
+    ]);
 
     const chat = await investmentOsRequest<{
       session_id: string;
