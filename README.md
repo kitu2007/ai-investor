@@ -44,6 +44,17 @@ bear/base/bull probabilities and value multiples. The workspace calculates cash 
 policy ceiling, exposure blockers, scenario contribution, and permanent-loss impact using deterministic
 backend code. It does not invoke Codex, use an LLM API key, or place a trade.
 
+Choose **Load CIO** to read the latest completed council without starting another model run. New CIO v2
+reports supply scenario probabilities, numeric value multiples, narrative assumptions, conditions to act,
+and invalidation conditions. The UI requires a separate **Approve CIO assumptions** action before the
+allocation is allowed to carry `cio_approved` provenance. Editing any loaded probability or multiple makes
+the calculation manual again. Older councils remain readable but cannot claim numeric CIO provenance.
+
+After a CIO or allocation result is available, expand **Decision journal** to append a decision, review,
+thesis update, or postmortem. A journal entry requires the action, thesis, rationale, at least one
+invalidation condition, and a review date. It freezes the exact CIO/allocation context in local PostgreSQL.
+Later entries can supersede an earlier entry, but the UI and backend expose no edit or delete operation.
+
 ## Run locally
 
 First start PostgreSQL, migrations, and the backend from the sibling repository:

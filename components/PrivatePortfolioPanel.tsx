@@ -15,10 +15,13 @@ import { useEffect, useMemo, useState } from "react";
 import type {
   AllocationAnalysis,
   AllocationScenario,
+  CioAllocationDraft,
+  CouncilRun,
   PortfolioImportResult,
   PortfolioSnapshot,
   PrivatePortfolio,
 } from "@/lib/investment-os-types";
+import DecisionJournalPanel from "@/components/DecisionJournalPanel";
 
 const MAX_FILE_BYTES = 1_000_000;
 
@@ -97,6 +100,9 @@ export default function PrivatePortfolioPanel({ ticker }: { ticker: string }) {
   const [permanentLossPercent, setPermanentLossPercent] = useState(100);
   const [analysis, setAnalysis] = useState<AllocationAnalysis | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [cioDraft, setCioDraft] = useState<CioAllocationDraft | null>(null);
+  const [cioLoading, setCioLoading] = useState(false);
+  const [cioApproved, setCioApproved] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -203,11 +209,45 @@ export default function PrivatePortfolioPanel({ ticker }: { ticker: string }) {
     field: "probability" | "value_multiple",
     value: number,
   ) {
+    setCioApproved(false);
     setScenarios((current) =>
       current.map((scenario, scenarioIndex) =>
         scenarioIndex === index ? { ...scenario, [field]: value } : scenario,
       ),
     );
+  }
+
+  async function loadCioScenarios() {
+    setCioLoading(true);
+    setCioApproved(false);
+    setAnalysis(null);
+    setError("");
+    try {
+      const council = await jsonRequest<CouncilRun>(
+        "/api/investment-os/council/latest?ticker=" + encodeURIComponent(ticker),
+      );
+      const draft = await jsonRequest<CioAllocationDraft>(
+        "/api/investment-os/council/run/" +
+          encodeURIComponent(council.id) +
+          "/allocation-draft",
+      );
+      setCioDraft(draft);
+      setCandidateTicker(draft.ticker);
+      setScenarios((current) =>
+        draft.scenarios.map((scenario) => ({
+          name: scenario.name,
+          probability: scenario.probability,
+          value_multiple:
+            scenario.value_multiple ??
+            current.find((item) => item.name === scenario.name)?.value_multiple ??
+            1,
+        })),
+      );
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not load the latest CIO scenarios.");
+    } finally {
+      setCioLoading(false);
+    }
   }
 
   async function analyze() {
@@ -216,12 +256,17 @@ export default function PrivatePortfolioPanel({ ticker }: { ticker: string }) {
     setAnalysis(null);
     setError("");
     try {
+      const useCioProvenance = Boolean(
+        cioApproved && cioDraft?.ready_for_allocation && cioDraft.ticker === candidateTicker,
+      );
       setAnalysis(
         await jsonRequest<AllocationAnalysis>("/api/investment-os/portfolio/allocation", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             snapshot_id: snapshot.id,
+            scenario_source: useCioProvenance ? "cio_approved" : "manual",
+            council_run_id: useCioProvenance ? cioDraft?.council_run_id : null,
             candidate_ticker: candidateTicker.trim().toUpperCase(),
             target_weight: targetPercent / 100,
             sleeve,
@@ -366,7 +411,10 @@ export default function PrivatePortfolioPanel({ ticker }: { ticker: string }) {
                   Ticker
                   <input
                     value={candidateTicker}
-                    onChange={(event) => setCandidateTicker(event.target.value.toUpperCase())}
+                    onChange={(event) => {
+                      setCandidateTicker(event.target.value.toUpperCase());
+                      setCioApproved(false);
+                    }}
                     className="mt-1 w-full rounded-md border border-gray-800 bg-gray-950 px-2 py-1.5 text-[10px] text-gray-200"
                   />
                 </label>
@@ -415,6 +463,62 @@ export default function PrivatePortfolioPanel({ ticker }: { ticker: string }) {
                 />
               </label>
 
+              <div className="rounded-lg border border-violet-400/15 bg-violet-400/[0.035] p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-[10px] font-semibold text-violet-200">CIO scenario handoff</p>
+                    <p className="mt-0.5 text-[9px] leading-4 text-gray-600">
+                      Read the latest saved CIO assumptions. This starts no model run.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void loadCioScenarios()}
+                    disabled={cioLoading}
+                    className="rounded-md border border-violet-400/25 px-2 py-1.5 text-[9px] font-semibold text-violet-200 disabled:opacity-40"
+                  >
+                    {cioLoading ? "Loading…" : "Load CIO"}
+                  </button>
+                </div>
+                {cioDraft ? (
+                  <div className="mt-3 space-y-2 border-t border-gray-800 pt-2">
+                    <div className="flex items-center justify-between text-[9px]">
+                      <span className="text-gray-400">
+                        CIO {cioDraft.ownership_action.replaceAll("_", " ")} · {percent(cioDraft.confidence)} confidence
+                      </span>
+                      <span className={cioApproved ? "text-emerald-300" : "text-amber-300"}>
+                        {cioApproved ? "Approved" : "Review required"}
+                      </span>
+                    </div>
+                    {cioDraft.scenarios.map((scenario) => (
+                      <div key={scenario.name} className="rounded-md bg-gray-950/60 p-2">
+                        <p className="text-[9px] capitalize text-gray-300">
+                          {scenario.name} · {percent(scenario.probability)} · {scenario.value_multiple == null ? "no saved multiple" : `${scenario.value_multiple.toFixed(2)}×`}
+                        </p>
+                        <p className="mt-1 text-[8px] leading-4 text-gray-600">{scenario.summary}</p>
+                      </div>
+                    ))}
+                    {cioDraft.warnings.map((warning) => (
+                      <p key={warning} className="text-[9px] leading-4 text-amber-200">{warning}</p>
+                    ))}
+                    {cioDraft.ready_for_allocation ? (
+                      <button
+                        type="button"
+                        onClick={() => setCioApproved(true)}
+                        disabled={cioApproved}
+                        className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-emerald-400/25 bg-emerald-400/10 px-2 py-2 text-[9px] font-semibold text-emerald-200 disabled:opacity-60"
+                      >
+                        <CheckCircle2 size={11} />
+                        {cioApproved ? "CIO assumptions approved" : "Approve CIO assumptions"}
+                      </button>
+                    ) : null}
+                    <p className="text-[8px] leading-4 text-gray-700">
+                      Editing any probability or multiple returns provenance to manual.
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+
               <div>
                 <div className="grid grid-cols-[1fr_78px_78px] gap-2 text-[8px] uppercase tracking-wide text-gray-700">
                   <span>Scenario assumption</span><span>Probability %</span><span>Value multiple</span>
@@ -462,6 +566,9 @@ export default function PrivatePortfolioPanel({ ticker }: { ticker: string }) {
                 <p className="text-[10px] font-semibold text-gray-200">
                   {analysis.result.feasible ? "Within hard constraints" : "Review policy blockers"}
                 </p>
+                <span className="ml-auto text-[8px] uppercase text-gray-600">
+                  {analysis.scenario_source.replaceAll("_", " ")}
+                </span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-[9px] text-gray-500">
                 <span>Policy ceiling <b className="text-gray-200">{percent(analysis.result.policy_ceiling_weight)}</b></span>
@@ -495,6 +602,13 @@ export default function PrivatePortfolioPanel({ ticker }: { ticker: string }) {
               </p>
             </div>
           ) : null}
+
+          <DecisionJournalPanel
+            key={analysis?.id ?? "history"}
+            ticker={ticker}
+            analysis={analysis}
+            cioDraft={cioDraft}
+          />
 
           {error ? <p className="text-[10px] leading-4 text-rose-300">{error}</p> : null}
         </div>

@@ -238,11 +238,11 @@ export interface CouncilAgentArtifact {
 }
 
 export interface CioSynthesisArtifact {
-  schema_version: "1.0";
+  schema_version: "1.0" | "1.1";
   ticker: string;
   question: string;
   context_hash: string;
-  prompt_version: "council-cio-v1";
+  prompt_version: "council-cio-v1" | "council-cio-v2";
   generated_at: string;
   as_of: string;
   perspective_run_ids: string[];
@@ -256,7 +256,9 @@ export interface CioSynthesisArtifact {
   conditions_to_act: string[];
   invalidation_conditions: string[];
   next_questions: string[];
-  scenarios: ResearchArtifact["scenarios"];
+  scenarios: Array<
+    ResearchArtifact["scenarios"][number] & { value_multiple?: number | null }
+  >;
   sources: ResearchSource[];
   disclaimer: string;
 }
@@ -304,6 +306,23 @@ export interface CouncilRun {
   completed_at: string | null;
   agent_runs: CouncilAgentRun[];
   estimated_codex_calls: number;
+}
+
+export interface CioAllocationDraft {
+  council_run_id: string;
+  ticker: string;
+  context_hash: string;
+  ownership_action: string;
+  confidence: number;
+  evidence_sufficiency: string;
+  generated_at: string;
+  scenarios: Array<
+    ResearchArtifact["scenarios"][number] & { value_multiple: number | null }
+  >;
+  invalidation_conditions: string[];
+  conditions_to_act: string[];
+  ready_for_allocation: boolean;
+  warnings: string[];
 }
 
 export interface PortfolioPosition {
@@ -365,10 +384,14 @@ export interface AllocationAnalysis {
   id: string;
   snapshot_id: string;
   policy_id: string;
+  council_run_id: string | null;
+  scenario_source: "manual" | "cio_approved";
   candidate_ticker: string;
   request: {
     snapshot_id: string;
     policy_id: string | null;
+    council_run_id: string | null;
+    scenario_source: "manual" | "cio_approved";
     candidate_ticker: string;
     candidate_name: string | null;
     target_weight: number;
@@ -398,5 +421,24 @@ export interface AllocationAnalysis {
     warnings: AllocationWarning[];
     disclaimer: string;
   };
+  created_at: string;
+}
+
+export interface DecisionJournalEntry {
+  id: string;
+  ticker: string;
+  company_id: number | null;
+  entry_type: "decision" | "review" | "thesis_update" | "postmortem";
+  action: "initiate" | "add" | "hold" | "trim" | "exit" | "watch" | "pass";
+  headline: string;
+  thesis: string;
+  rationale: string;
+  invalidation_conditions: string[];
+  decision_date: string;
+  review_date: string;
+  council_run_id: string | null;
+  allocation_analysis_id: string | null;
+  supersedes_entry_id: string | null;
+  decision_context: Record<string, unknown>;
   created_at: string;
 }
