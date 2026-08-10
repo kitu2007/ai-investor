@@ -37,8 +37,10 @@ type Message = {
   content: string;
 };
 
-const DEFAULT_QUESTION =
-  "Evaluate momentum, drawdown, trend, and relative strength. What should I investigate next?";
+function defaultResearchQuestion(ticker: string): string {
+  const subject = ticker.trim().toUpperCase() || "<TICKER>";
+  return `Is ${subject}'s valuation justified by its growth, and what evidence would invalidate the thesis?`;
+}
 
 function percent(value: number | null | undefined, digits = 1): string {
   return value == null ? "—" : (value * 100).toFixed(digits) + "%";
@@ -663,7 +665,7 @@ function CompanyPanel({
 
 export default function InvestmentWorkspace() {
   const [ticker, setTicker] = useState("AAPL");
-  const [question, setQuestion] = useState(DEFAULT_QUESTION);
+  const [question, setQuestion] = useState(() => defaultResearchQuestion("AAPL"));
   const [messages, setMessages] = useState<Message[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<TechnicalAnalysis | null>(null);
@@ -681,6 +683,17 @@ export default function InvestmentWorkspace() {
   const [error, setError] = useState("");
 
   const normalizedTicker = useMemo(() => ticker.trim().toUpperCase(), [ticker]);
+
+  function updateTicker(value: string) {
+    const nextTicker = value.toUpperCase().replace(/[^A-Z.-]/g, "").slice(0, 16);
+    setQuestion((currentQuestion) =>
+      currentQuestion === defaultResearchQuestion(normalizedTicker)
+        ? defaultResearchQuestion(nextTicker)
+        : currentQuestion,
+    );
+    setTicker(nextTicker);
+    setSessionId(null);
+  }
 
   const checkStatus = useCallback(async () => {
     setStatusLoading(true);
@@ -937,7 +950,7 @@ export default function InvestmentWorkspace() {
                       <button
                         key={symbol}
                         type="button"
-                        onClick={() => setTicker(symbol)}
+                        onClick={() => updateTicker(symbol)}
                         className="rounded-lg border border-gray-800 bg-gray-900 px-3 py-1.5 text-xs text-gray-400 hover:border-gray-700 hover:text-white"
                       >
                         {symbol}
@@ -982,10 +995,7 @@ export default function InvestmentWorkspace() {
                 </label>
                 <input
                   value={ticker}
-                  onChange={(event) => {
-                    setTicker(event.target.value.toUpperCase().replace(/[^A-Z.-]/g, "").slice(0, 16));
-                    setSessionId(null);
-                  }}
+                  onChange={(event) => updateTicker(event.target.value)}
                   className="w-20 bg-transparent text-sm font-bold uppercase text-blue-300 outline-none"
                   aria-label="Stock ticker"
                 />
