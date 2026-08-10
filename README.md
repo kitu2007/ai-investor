@@ -17,6 +17,12 @@ Fisher, Asymmetric Growth, Technical/Momentum, and Macro/Industry reasoning. Eac
 cited claims, risks, invalidation conditions, and unresolved questions. The exact saved Markdown can be
 opened or copied from that reader. Reports remain local and outside Git.
 
+The top navigation also includes **Industry Research**. It renders the local portfolio policy, AI
+infrastructure, quantum-computing, biotech/AI-medicine, and dated review Markdown files. Its search returns
+matching passages across the whole local library. Reading and searching these files is deterministic and
+does not call Codex or require an API key. The backend exposes only an explicit document allowlist rather
+than accepting arbitrary local paths.
+
 Saved dossier history is available per ticker. Select a completed version, write a focused question, and
 choose **Ask follow-up** to reuse that report's validated context. A follow-up is smaller than a full
 council dossier, but it still invokes Codex and consumes some of the signed-in account's allowance.
@@ -73,7 +79,9 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000/research](http://localhost:3000/research). The backend defaults to
+Open [http://localhost:3000/research](http://localhost:3000/research) for company work or
+[http://localhost:3000/industries](http://localhost:3000/industries) for the searchable industry library.
+The backend defaults to
 `http://127.0.0.1:8000`; set `INVESTMENT_OS_API_URL` locally only if that changes.
 
 For normal use, the sibling backend repository provides `make stack`, which starts PostgreSQL, applies

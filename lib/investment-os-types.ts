@@ -225,6 +225,34 @@ export interface ResearchCapabilities {
   };
 }
 
+export interface IndustryDocumentSummary {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  updated_at: string;
+}
+
+export interface IndustryDocument extends IndustryDocumentSummary {
+  content: string;
+}
+
+export interface IndustrySearchHit {
+  document_id: string;
+  title: string;
+  category: string;
+  snippet: string;
+  line_number: number;
+  matched_terms: string[];
+  score: number;
+}
+
+export interface IndustrySearchResponse {
+  query: string;
+  documents_searched: number;
+  hits: IndustrySearchHit[];
+}
+
 export interface CouncilAgentArtifact {
   schema_version: "1.0";
   ticker: string;
