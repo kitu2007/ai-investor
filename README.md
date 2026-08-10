@@ -22,6 +22,13 @@ choose **Ask follow-up** to reuse that report's validated context. A follow-up i
 council dossier, but it still invokes Codex and consumes some of the signed-in account's allowance.
 Active follow-ups can also be cancelled.
 
+The separate **Independent council** control is the higher-cost independence mode. It freezes one context,
+runs Evidence, Valuation, Bear, Buffett, Munger, Fisher, Asymmetric Growth, Technical/Momentum, and
+Macro/Industry in separate Codex processes, then lets a separate CIO synthesize only the validated outputs.
+The confirmation states that this uses up to ten Codex calls. Progress and cancellation remain visible;
+completed agent cards expand to detailed claims, risks, invalidation conditions, open questions, and sources.
+The combined council is saved locally as JSON and Markdown.
+
 The **Deterministic valuation lab** accepts explicit normalized free cash flow, diluted shares, net debt,
 and bear/base/bull assumptions. It calculates DCF values, a probability-weighted result, and reverse-DCF
 implied growth without invoking a model. Example rates are visible starting points, not company facts.

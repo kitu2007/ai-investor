@@ -218,4 +218,90 @@ export interface ResearchCapabilities {
     authentication: string;
   };
   api_key_required: boolean;
+  independent_council: {
+    default_agents: number;
+    maximum_codex_calls: number;
+    explicit_confirmation_required: boolean;
+  };
+}
+
+export interface CouncilAgentArtifact {
+  schema_version: "1.0";
+  ticker: string;
+  question: string;
+  context_hash: string;
+  prompt_version: "council-agent-v1";
+  generated_at: string;
+  as_of: string;
+  perspective: ResearchPerspective;
+  sources: ResearchSource[];
+}
+
+export interface CioSynthesisArtifact {
+  schema_version: "1.0";
+  ticker: string;
+  question: string;
+  context_hash: string;
+  prompt_version: "council-cio-v1";
+  generated_at: string;
+  as_of: string;
+  perspective_run_ids: string[];
+  ownership_action: string;
+  confidence: number;
+  evidence_sufficiency: string;
+  executive_summary: string;
+  key_claims: ResearchPerspective["claims"];
+  agreements: string[];
+  disagreements: string[];
+  conditions_to_act: string[];
+  invalidation_conditions: string[];
+  next_questions: string[];
+  scenarios: ResearchArtifact["scenarios"];
+  sources: ResearchSource[];
+  disclaimer: string;
+}
+
+export interface CouncilAgentRun {
+  id: string;
+  council_run_id: string;
+  agent: string;
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
+  runner: string;
+  contract_version: string;
+  prompt_version: string;
+  context_hash: string;
+  model_identifier: string | null;
+  artifact: CouncilAgentArtifact | null;
+  error: string | null;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface CouncilRun {
+  id: string;
+  ticker: string;
+  company_name: string;
+  question: string;
+  status:
+    | "queued"
+    | "running"
+    | "synthesizing"
+    | "completed"
+    | "partial"
+    | "failed"
+    | "cancelled";
+  runner: string;
+  requested_agents: string[];
+  technical_snapshot: TechnicalAnalysis | null;
+  context_hash: string;
+  cio_artifact: CioSynthesisArtifact | null;
+  artifact_path: string | null;
+  markdown_path: string | null;
+  error: string | null;
+  requested_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  agent_runs: CouncilAgentRun[];
+  estimated_codex_calls: number;
 }
