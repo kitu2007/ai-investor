@@ -2,11 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { persistPriceHistory, priceHistory } from "@/lib/investment-os-market";
 import { investmentOsRequest, publicError } from "@/lib/investment-os-server";
-import { RUNNER_IDS } from "@/lib/investment-os-types";
-import type { CouncilRun, RunnerId, TechnicalAnalysis } from "@/lib/investment-os-types";
+import { COUNCIL_AGENTS, MINIMUM_COUNCIL_AGENTS, RUNNER_IDS } from "@/lib/investment-os-types";
+import type {
+  CouncilAgentName,
+  CouncilRun,
+  RunnerId,
+  TechnicalAnalysis,
+} from "@/lib/investment-os-types";
 
 function requestedRunner(value: unknown): RunnerId | undefined {
   return RUNNER_IDS.includes(value as RunnerId) ? (value as RunnerId) : undefined;
+}
+
+// Forward only known agents, in canonical order, and let the backend default
+// apply when the request does not name a usable selection.
+function requestedAgents(value: unknown): CouncilAgentName[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const agents = COUNCIL_AGENTS.filter((agent) => value.includes(agent));
+  return agents.length >= MINIMUM_COUNCIL_AGENTS ? agents : undefined;
 }
 
 
@@ -15,6 +28,7 @@ export async function POST(request: NextRequest) {
     ticker?: string;
     question?: string;
     runner?: string;
+    agents?: unknown;
   };
   const ticker = body.ticker?.trim().toUpperCase();
   const question = body.question?.trim();
@@ -48,6 +62,7 @@ export async function POST(request: NextRequest) {
         question,
         technical_snapshot: technical,
         runner: requestedRunner(body.runner),
+        agents: requestedAgents(body.agents),
       }),
     });
     return NextResponse.json(council, { status: 202 });

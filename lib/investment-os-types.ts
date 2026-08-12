@@ -212,6 +212,33 @@ export interface ValuationResponse {
 
 export type RunnerId = "codex" | "claude";
 
+export type CouncilAgentName =
+  | "evidence"
+  | "valuation"
+  | "bear"
+  | "buffett"
+  | "munger"
+  | "fisher"
+  | "asymmetric_growth"
+  | "technical_momentum"
+  | "macro_industry";
+
+/** Mirrors ALL_COUNCIL_AGENTS in the backend council contract, in the same order. */
+export const COUNCIL_AGENTS: CouncilAgentName[] = [
+  "evidence",
+  "valuation",
+  "bear",
+  "buffett",
+  "munger",
+  "fisher",
+  "asymmetric_growth",
+  "technical_momentum",
+  "macro_industry",
+];
+
+/** The backend rejects fewer than two agents; the CIO synthesis is the extra call. */
+export const MINIMUM_COUNCIL_AGENTS = 2;
+
 export interface RunnerCapability {
   id: RunnerId;
   label: string;
