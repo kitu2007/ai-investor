@@ -2,10 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { persistPriceHistory, priceHistory } from "@/lib/investment-os-market";
 import { investmentOsRequest, publicError } from "@/lib/investment-os-server";
-import type { CouncilRun, TechnicalAnalysis } from "@/lib/investment-os-types";
+import { RUNNER_IDS } from "@/lib/investment-os-types";
+import type { CouncilRun, RunnerId, TechnicalAnalysis } from "@/lib/investment-os-types";
+
+function requestedRunner(value: unknown): RunnerId | undefined {
+  return RUNNER_IDS.includes(value as RunnerId) ? (value as RunnerId) : undefined;
+}
+
 
 export async function POST(request: NextRequest) {
-  const body = (await request.json()) as { ticker?: string; question?: string };
+  const body = (await request.json()) as {
+    ticker?: string;
+    question?: string;
+    runner?: string;
+  };
   const ticker = body.ticker?.trim().toUpperCase();
   const question = body.question?.trim();
   if (!ticker || !question) {
@@ -33,7 +43,12 @@ export async function POST(request: NextRequest) {
     });
     const council = await investmentOsRequest<CouncilRun>("/api/v1/councils", {
       method: "POST",
-      body: JSON.stringify({ ticker, question, technical_snapshot: technical }),
+      body: JSON.stringify({
+        ticker,
+        question,
+        technical_snapshot: technical,
+        runner: requestedRunner(body.runner),
+      }),
     });
     return NextResponse.json(council, { status: 202 });
   } catch (error) {

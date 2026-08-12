@@ -210,20 +210,68 @@ export interface ValuationResponse {
   disclaimer: string;
 }
 
+export type RunnerId = "codex" | "claude";
+
+export interface RunnerCapability {
+  id: RunnerId;
+  label: string;
+  enabled: boolean;
+  installed: boolean;
+  authenticated: boolean;
+  authentication: string;
+  version: string | null;
+}
+
 export interface ResearchCapabilities {
+  /** Retained for older builds; prefer `runners`. */
   codex: {
     enabled: boolean;
     installed: boolean;
     authenticated: boolean;
     authentication: string;
   };
+  runners?: Record<RunnerId, RunnerCapability>;
+  default_runner?: RunnerId;
   api_key_required: boolean;
   durable_jobs?: boolean;
   independent_council: {
     default_agents: number;
     maximum_codex_calls: number;
+    maximum_model_calls?: number;
     explicit_confirmation_required: boolean;
   };
+}
+
+export const RUNNER_IDS: RunnerId[] = ["codex", "claude"];
+
+export function runnerLabel(
+  capabilities: ResearchCapabilities | null,
+  runner: RunnerId,
+): string {
+  return capabilities?.runners?.[runner]?.label ?? (runner === "claude" ? "Claude Code" : "Codex");
+}
+
+/** Recover the runner id from a stored run value such as `claude_local`. */
+export function runnerIdFromValue(stored: string | null | undefined): RunnerId {
+  const candidate = stored?.split("_")[0];
+  return RUNNER_IDS.includes(candidate as RunnerId) ? (candidate as RunnerId) : "codex";
+}
+
+export function runnerReady(
+  capabilities: ResearchCapabilities | null,
+  runner: RunnerId,
+): boolean {
+  const capability = capabilities?.runners?.[runner];
+  if (capability) {
+    return capability.enabled && capability.installed && capability.authenticated;
+  }
+  // A backend without the runners map only ever supports Codex.
+  if (runner !== "codex" || !capabilities) return false;
+  return (
+    capabilities.codex.enabled &&
+    capabilities.codex.installed &&
+    capabilities.codex.authenticated
+  );
 }
 
 export interface SourceFreshness {

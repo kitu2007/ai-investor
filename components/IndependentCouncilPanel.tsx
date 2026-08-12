@@ -13,10 +13,12 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { runnerLabel, runnerReady } from "@/lib/investment-os-types";
 import type {
   CouncilAgentRun,
   CouncilRun,
   ResearchCapabilities,
+  RunnerId,
 } from "@/lib/investment-os-types";
 
 const ACTIVE = new Set(["queued", "running", "synthesizing"]);
@@ -127,10 +129,12 @@ export default function IndependentCouncilPanel({
   ticker,
   question,
   capabilities,
+  runner,
 }: {
   ticker: string;
   question: string;
   capabilities: ResearchCapabilities | null;
+  runner: RunnerId;
 }) {
   const [run, setRun] = useState<CouncilRun | null>(null);
   const [review, setReview] = useState(false);
@@ -185,7 +189,7 @@ export default function IndependentCouncilPanel({
         await jsonRequest<CouncilRun>("/api/investment-os/council/run", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ticker, question: question.trim() }),
+          body: JSON.stringify({ ticker, question: question.trim(), runner }),
         }),
       );
     } catch (reason) {
@@ -309,7 +313,7 @@ export default function IndependentCouncilPanel({
             loading ||
             !ticker ||
             !question.trim() ||
-            !capabilities?.codex.authenticated
+            !runnerReady(capabilities, runner)
           }
           className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-violet-400/25 bg-violet-500/10 px-3 py-2 text-[10px] font-semibold text-violet-200 hover:bg-violet-500/15 disabled:cursor-not-allowed disabled:opacity-40"
         >
@@ -325,8 +329,8 @@ export default function IndependentCouncilPanel({
             <div>
               <p className="text-[10px] font-semibold text-amber-200">Confirm higher-cost mode</p>
               <p className="mt-1 text-[10px] leading-4 text-gray-400">
-                This queues up to 10 separate Codex calls: nine isolated opinions plus the CIO. It uses
-                substantially more allowance than the regular dossier.
+                This queues up to 10 separate {runnerLabel(capabilities, runner)} calls: nine isolated
+                opinions plus the CIO. It uses substantially more allowance than the regular dossier.
               </p>
               <p className="mt-2 rounded border border-gray-800 bg-gray-950/60 p-2 text-[10px] text-gray-300">
                 {ticker}: {question.trim()}
