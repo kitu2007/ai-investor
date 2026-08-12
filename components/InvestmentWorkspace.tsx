@@ -40,6 +40,8 @@ import type {
   ResearchRun,
   ResearchSource,
   ResearchResponse,
+  QuickAnswer,
+  QuickAnswerArtifact,
   RunnerId,
   TechnicalAnalysis,
 } from "@/lib/investment-os-types";
@@ -50,6 +52,10 @@ import ValuationLab from "@/components/ValuationLab";
 type Message = {
   role: "user" | "assistant";
   content: string;
+  // Present when the message is a model-produced quick answer, so the chat can
+  // show what the claims rest on instead of an unattributable paragraph.
+  quickAnswer?: QuickAnswerArtifact;
+  pending?: boolean;
 };
 
 function defaultResearchQuestion(ticker: string): string {
@@ -542,6 +548,72 @@ function TechnicalPanel({ analysis }: { analysis: TechnicalAnalysis | null }) {
               {friendlyFlag(flag)}
             </span>
           ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function QuickAnswerDetail({ artifact }: { artifact: QuickAnswerArtifact }) {
+  const [open, setOpen] = useState(false);
+  const facts = artifact.claims.filter((claim) => claim.classification === "fact");
+  return (
+    <div className="mt-2 border-t border-gray-800 pt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex items-center gap-1 text-[10px] font-medium text-violet-300 hover:text-violet-200"
+      >
+        {open ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+        {artifact.sources.length} source{artifact.sources.length === 1 ? "" : "s"}
+        {facts.length ? ` · ${facts.length} cited fact${facts.length === 1 ? "" : "s"}` : ""}
+      </button>
+      {open ? (
+        <div className="mt-2 space-y-2">
+          {artifact.claims.length ? (
+            <ul className="space-y-1">
+              {artifact.claims.map((claim, index) => (
+                <li key={index} className="text-[10px] leading-4 text-gray-400">
+                  <span className="font-semibold uppercase text-gray-500">
+                    {claim.classification}
+                  </span>{" "}
+                  {claim.statement}
+                  {claim.source_ids.length ? (
+                    <span className="text-gray-600">
+                      {" "}
+                      [{claim.source_ids.join(", ")}]
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {artifact.limitations.length ? (
+            <p className="text-[10px] leading-4 text-amber-300/80">
+              Limitations: {artifact.limitations.join(" · ")}
+            </p>
+          ) : null}
+          <ul className="space-y-1">
+            {artifact.sources.map((source) => (
+              <li key={source.id} className="text-[10px] leading-4">
+                <span className="text-gray-600">[{source.id}]</span>{" "}
+                {source.url.startsWith("http") ? (
+                  <a
+                    href={source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-300 hover:underline"
+                  >
+                    {source.title}
+                  </a>
+                ) : (
+                  <span className="text-gray-400">{source.title}</span>
+                )}
+                <span className="text-gray-600"> — {source.publisher}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[9px] text-gray-700">{artifact.disclaimer}</p>
         </div>
       ) : null}
     </div>
@@ -1043,6 +1115,8 @@ export default function InvestmentWorkspace() {
   const [status, setStatus] = useState<BackendStatus | null>(null);
   const [capabilities, setCapabilities] = useState<ResearchCapabilities | null>(null);
   const [runner, setRunner] = useState<RunnerId>("codex");
+  const [quickAnswerId, setQuickAnswerId] = useState<string | null>(null);
+  const [quickAnswerLoading, setQuickAnswerLoading] = useState(false);
   const [researchRun, setResearchRun] = useState<ResearchRun | null>(null);
   const [researchHistory, setResearchHistory] = useState<ResearchRun[]>([]);
   const [followUpRun, setFollowUpRun] = useState<FollowUpRun | null>(null);
@@ -1156,6 +1230,58 @@ export default function InvestmentWorkspace() {
     };
   }, [researchRun]);
 
+  // Poll the queued quick answer and resolve the pending chat bubble in place.
+  useEffect(() => {
+    if (!quickAnswerId) return;
+    let active = true;
+    const interval = window.setInterval(() => {
+      void jsonRequest<QuickAnswer>(
+        "/api/investment-os/research/quick-answer/" + encodeURIComponent(quickAnswerId),
+      )
+        .then((answer) => {
+          if (!active || ["queued", "running"].includes(answer.status)) return;
+          window.clearInterval(interval);
+          setQuickAnswerId(null);
+          setQuickAnswerLoading(false);
+          setMessages((current) => {
+            const settled = current.filter((item) => !item.pending);
+            if (answer.status === "completed" && answer.artifact) {
+              return [
+                ...settled,
+                {
+                  role: "assistant",
+                  content: answer.artifact.answer,
+                  quickAnswer: answer.artifact,
+                },
+              ];
+            }
+            if (answer.status === "cancelled") {
+              return [...settled, { role: "assistant", content: "That question was cancelled." }];
+            }
+            return [
+              ...settled,
+              {
+                role: "assistant",
+                content: answer.error || "That question could not be answered.",
+              },
+            ];
+          });
+        })
+        .catch((reason) => {
+          if (!active) return;
+          window.clearInterval(interval);
+          setQuickAnswerId(null);
+          setQuickAnswerLoading(false);
+          setError(reason instanceof Error ? reason.message : "Lost track of that question.");
+          setMessages((current) => current.filter((item) => !item.pending));
+        });
+    }, 2000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [quickAnswerId]);
+
   useEffect(() => {
     if (!followUpRun || !["queued", "running"].includes(followUpRun.status)) return;
     let active = true;
@@ -1215,6 +1341,54 @@ export default function InvestmentWorkspace() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function askQuickAnswer() {
+    if (!normalizedTicker || !question.trim() || quickAnswerLoading) return;
+    const prompt = question.trim();
+    const label = runnerLabel(capabilities, runner);
+    setQuickAnswerLoading(true);
+    setError("");
+    setMessages((current) => [
+      ...current,
+      { role: "user", content: prompt },
+      { role: "assistant", content: `${label} is looking that up…`, pending: true },
+    ]);
+    try {
+      const queued = await jsonRequest<QuickAnswer>("/api/investment-os/research/quick-answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker: normalizedTicker, question: prompt, runner }),
+      });
+      setQuickAnswerId(queued.id);
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : "Could not ask that question.";
+      setError(message);
+      setQuickAnswerLoading(false);
+      setMessages((current) => [
+        ...current.filter((item) => !item.pending),
+        { role: "assistant", content: "I could not answer that. " + message },
+      ]);
+    }
+  }
+
+  async function cancelQuickAnswer() {
+    if (!quickAnswerId) return;
+    const id = quickAnswerId;
+    setQuickAnswerId(null);
+    setQuickAnswerLoading(false);
+    try {
+      await jsonRequest<QuickAnswer>(
+        `/api/investment-os/research/quick-answer/${encodeURIComponent(id)}/cancel`,
+        { method: "POST" },
+      );
+    } catch {
+      // The record is already gone or finished; the thread message is enough.
+    }
+    setMessages((current) => [
+      ...current.filter((item) => !item.pending),
+      { role: "assistant", content: "That question was cancelled." },
+    ]);
   }
 
   function reviewResearchRequest() {
@@ -1346,7 +1520,7 @@ export default function InvestmentWorkspace() {
                 <Sparkles size={12} /> Evidence-first research workspace
               </div>
               <h1 className="text-xl font-semibold tracking-tight text-white">
-                Ask a company question. Choose quick signals or a full research dossier.
+                Ask a company question. Get a cited answer in chat, or commission a full dossier.
               </h1>
               <p className="mt-1 max-w-2xl text-xs leading-5 text-gray-500">
                 Deterministic calculations stay separate from question-specific model research and cited
@@ -1414,7 +1588,17 @@ export default function InvestmentWorkspace() {
                           : "max-w-[88%] rounded-2xl rounded-bl-md border border-gray-800 bg-gray-900 px-4 py-3 text-sm leading-6 text-gray-200"
                       }
                     >
-                      {message.content}
+                      {message.pending ? (
+                        <span className="flex items-center gap-2 text-gray-400">
+                          <LoaderCircle size={13} className="animate-spin text-violet-300" />
+                          {message.content}
+                        </span>
+                      ) : (
+                        message.content
+                      )}
+                      {message.quickAnswer ? (
+                        <QuickAnswerDetail artifact={message.quickAnswer} />
+                      ) : null}
                     </div>
                   </div>
                 ))}
@@ -1504,13 +1688,41 @@ export default function InvestmentWorkspace() {
                 aria-label="Research question"
               />
               <div className="flex shrink-0 flex-col gap-1.5">
+                {quickAnswerLoading ? (
+                  <button
+                    type="button"
+                    onClick={() => void cancelQuickAnswer()}
+                    className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-rose-400/25 bg-rose-400/10 px-3 text-[11px] font-semibold text-rose-200 hover:bg-rose-400/15"
+                    aria-label="Cancel the question"
+                  >
+                    <Square size={12} />
+                    Cancel
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void askQuickAnswer()}
+                    disabled={
+                      !normalizedTicker ||
+                      !question.trim() ||
+                      !status?.connected ||
+                      !runnerReady(capabilities, runner)
+                    }
+                    className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Ask this question and answer in the chat"
+                  >
+                    <MessageSquareText size={14} />
+                    Ask
+                  </button>
+                )}
                 <button
-                  disabled={loading || !normalizedTicker || !question.trim() || !status?.connected}
-                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Calculate quick signals"
+                  disabled={loading || !normalizedTicker || !status?.connected}
+                  title="Recalculates trend, momentum and drawdown. Does not read your question."
+                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-700 px-3 text-[11px] font-semibold text-gray-300 hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Recalculate technical signals; does not read the question"
                 >
                   {loading ? <LoaderCircle size={14} className="animate-spin" /> : <Activity size={14} />}
-                  Quick signals
+                  Signals
                 </button>
                 {researchActive ? (
                   <button
@@ -1625,8 +1837,8 @@ export default function InvestmentWorkspace() {
             ) : null}
             {error ? <p className="mx-auto mt-2 max-w-3xl text-xs text-rose-300">{error}</p> : null}
             <p className="mx-auto mt-2 max-w-3xl text-center text-[10px] text-gray-700">
-              Quick signals use no model. Full dossiers and targeted follow-ups use your{" "}
-              {runnerLabel(capabilities, runner)} allowance.
+              Signals are deterministic and ignore your question. Ask answers it in chat with one{" "}
+              {runnerLabel(capabilities, runner)} call; a full dossier costs far more.
             </p>
           </form>
         </div>

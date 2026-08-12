@@ -68,6 +68,12 @@ export interface ResearchSource {
   source_type: string;
 }
 
+export interface ResearchClaim {
+  statement: string;
+  classification: "fact" | "inference" | "assumption" | "calculation";
+  source_ids: string[];
+}
+
 export interface ResearchPerspective {
   agent: string;
   stance: string;
@@ -247,6 +253,35 @@ export interface RunnerCapability {
   authenticated: boolean;
   authentication: string;
   version: string | null;
+}
+
+export interface QuickAnswerArtifact {
+  schema_version: "1.0";
+  ticker: string;
+  question: string;
+  generated_at: string;
+  as_of: string;
+  answer: string;
+  claims: ResearchClaim[];
+  limitations: string[];
+  sources: ResearchSource[];
+  disclaimer: string;
+}
+
+export interface QuickAnswer {
+  id: string;
+  ticker: string;
+  company_name: string;
+  question: string;
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
+  runner: string;
+  artifact: QuickAnswerArtifact | null;
+  artifact_path: string | null;
+  markdown_path: string | null;
+  error: string | null;
+  requested_at: string;
+  started_at: string | null;
+  completed_at: string | null;
 }
 
 export interface ResearchCapabilities {
