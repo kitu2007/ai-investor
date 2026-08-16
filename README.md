@@ -27,6 +27,12 @@ stored official SEC XBRL facts, links every available value to its filing, prese
 leaves unavailable facts blank rather than estimating them. **Refresh SEC data** is an explicit public
 data fetch; simply opening the dashboard is a local, model-free read.
 
+The **Price History** board shows adjusted closing prices for any ticker over All, 10-year, 5-year,
+2-year, 1-year, 6-month, and 3-month windows. The price chart switches between normal and logarithmic
+scales. Two synchronized charts calculate drawdown from the running high and drawup from the running low
+inside the selected window. All calculations are deterministic, sourced from Yahoo Finance, and persisted
+through the backend's provider-labelled price store; opening this board does not invoke a model.
+
 The top navigation also includes **Industry Research**. It renders the local portfolio policy, AI
 infrastructure, quantum-computing, biotech/AI-medicine, and dated review Markdown files. Its search returns
 matching passages across the whole local library. Reading and searching these files is deterministic and
@@ -100,8 +106,9 @@ npm run dev
 Open [http://localhost:3000/research](http://localhost:3000/research) for company work or
 [http://localhost:3000/decisions](http://localhost:3000/decisions) for evidence, watches, reminders, and
 company comparison. Open [http://localhost:3000/financials](http://localhost:3000/financials) for annual
-financial statements, and [http://localhost:3000/industries](http://localhost:3000/industries) for the
-searchable industry library.
+financial statements, [http://localhost:3000/prices](http://localhost:3000/prices) for adjusted price,
+drawdown, and drawup history, and [http://localhost:3000/industries](http://localhost:3000/industries) for
+the searchable industry library.
 The backend defaults to
 `http://127.0.0.1:8000`; set `INVESTMENT_OS_API_URL` locally only if that changes.
 
