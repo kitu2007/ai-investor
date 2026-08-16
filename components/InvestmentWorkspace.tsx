@@ -24,6 +24,13 @@ import {
 } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
+import {
+  RUNNER_IDS,
+  runnerIdFromValue,
+  runnerLabel,
+  runnerReady,
+} from "@/lib/investment-os-types";
+import { isAskShortcut, restoreQuickAnswerHistory } from "@/lib/research-chat";
 import type {
   BackendStatus,
   EvidenceItem,
@@ -33,7 +40,10 @@ import type {
   ResearchPerspective,
   ResearchRun,
   ResearchSource,
-  ResearchResponse,
+  QuickAnswer,
+  QuickAnswerArtifact,
+  RunnerId,
+  SignalsResponse,
   TechnicalAnalysis,
 } from "@/lib/investment-os-types";
 import IndependentCouncilPanel from "@/components/IndependentCouncilPanel";
@@ -43,6 +53,10 @@ import ValuationLab from "@/components/ValuationLab";
 type Message = {
   role: "user" | "assistant";
   content: string;
+  // Present when the message is a model-produced quick answer, so the chat can
+  // show what the claims rest on instead of an unattributable paragraph.
+  quickAnswer?: QuickAnswerArtifact;
+  pending?: boolean;
 };
 
 function defaultResearchQuestion(ticker: string): string {
@@ -206,7 +220,7 @@ function DossierModal({
         <header className="flex items-start justify-between gap-4 border-b border-gray-800 px-5 py-4">
           <div>
             <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300">
-              <FileText size={13} /> Detailed Codex dossier
+              <FileText size={13} /> Detailed research dossier
             </div>
             <h2 className="mt-1 text-lg font-semibold text-white">
               {artifact.ticker} · {artifact.company_name}
@@ -541,12 +555,79 @@ function TechnicalPanel({ analysis }: { analysis: TechnicalAnalysis | null }) {
   );
 }
 
+function QuickAnswerDetail({ artifact }: { artifact: QuickAnswerArtifact }) {
+  const [open, setOpen] = useState(false);
+  const facts = artifact.claims.filter((claim) => claim.classification === "fact");
+  return (
+    <div className="mt-2 border-t border-gray-800 pt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex items-center gap-1 text-[10px] font-medium text-violet-300 hover:text-violet-200"
+      >
+        {open ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+        {artifact.sources.length} source{artifact.sources.length === 1 ? "" : "s"}
+        {facts.length ? ` · ${facts.length} cited fact${facts.length === 1 ? "" : "s"}` : ""}
+      </button>
+      {open ? (
+        <div className="mt-2 space-y-2">
+          {artifact.claims.length ? (
+            <ul className="space-y-1">
+              {artifact.claims.map((claim, index) => (
+                <li key={index} className="text-[10px] leading-4 text-gray-400">
+                  <span className="font-semibold uppercase text-gray-500">
+                    {claim.classification}
+                  </span>{" "}
+                  {claim.statement}
+                  {claim.source_ids.length ? (
+                    <span className="text-gray-600">
+                      {" "}
+                      [{claim.source_ids.join(", ")}]
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {artifact.limitations.length ? (
+            <p className="text-[10px] leading-4 text-amber-300/80">
+              Limitations: {artifact.limitations.join(" · ")}
+            </p>
+          ) : null}
+          <ul className="space-y-1">
+            {artifact.sources.map((source) => (
+              <li key={source.id} className="text-[10px] leading-4">
+                <span className="text-gray-600">[{source.id}]</span>{" "}
+                {source.url.startsWith("http") ? (
+                  <a
+                    href={source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-300 hover:underline"
+                  >
+                    {source.title}
+                  </a>
+                ) : (
+                  <span className="text-gray-400">{source.title}</span>
+                )}
+                <span className="text-gray-600"> — {source.publisher}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[9px] text-gray-700">{artifact.disclaimer}</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function ResearchPanel({
   run,
   history,
   onSelectRun,
   followUp,
   capabilities,
+  runner,
   loading,
   followUpLoading,
 }: {
@@ -555,32 +636,34 @@ function ResearchPanel({
   onSelectRun: (run: ResearchRun) => void;
   followUp: FollowUpRun | null;
   capabilities: ResearchCapabilities | null;
+  runner: RunnerId;
   loading: boolean;
   followUpLoading: boolean;
 }) {
   const artifact = run?.artifact;
   const [detailSection, setDetailSection] = useState<string | null>(null);
   const completedHistory = history.filter((item) => item.status === "completed" && item.artifact);
-  const codexReady = Boolean(
-    capabilities?.codex.enabled && capabilities.codex.installed && capabilities.codex.authenticated,
-  );
+  const selectedLabel = runnerLabel(capabilities, runner);
+  // A saved dossier is attributed to whichever runner actually produced it.
+  const runLabel = run ? runnerLabel(capabilities, runnerIdFromValue(run.runner)) : selectedLabel;
+  const ready = runnerReady(capabilities, runner);
 
   return (
     <>
       <section className="rounded-xl border border-violet-400/20 bg-violet-400/[0.04] p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs font-semibold text-violet-200">
-          <Sparkles size={14} /> Codex research dossier
+          <Sparkles size={14} /> {selectedLabel} research dossier
         </div>
         <span
           className={
             "rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide " +
-            (codexReady
+            (ready
               ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
               : "border-amber-400/20 bg-amber-400/10 text-amber-300")
           }
         >
-          {codexReady ? "Codex ready" : "Codex unavailable"}
+          {ready ? `${selectedLabel} ready` : `${selectedLabel} unavailable`}
         </span>
       </div>
 
@@ -619,7 +702,9 @@ function ResearchPanel({
           <LoaderCircle size={14} className="mt-0.5 shrink-0 animate-spin text-violet-300" />
           <div>
             <p className="text-xs font-medium text-gray-200">
-              {run?.status === "running" ? "Codex is analyzing" : "Preparing Codex analysis"}
+              {run?.status === "running"
+                ? `${runLabel} is analyzing`
+                : `Preparing ${runLabel} analysis`}
             </p>
             <p className="mt-1 text-[10px] leading-4 text-gray-500">
               Independent perspectives, evidence checks, scenarios and disagreements are being assembled.
@@ -628,7 +713,7 @@ function ResearchPanel({
         </div>
       ) : run?.status === "failed" ? (
         <div className="mt-3 rounded-lg border border-rose-400/20 bg-rose-400/[0.06] p-3 text-[11px] leading-5 text-rose-200">
-          {run.error || "The local Codex analysis failed."}
+          {run.error || `The local ${runLabel} analysis failed.`}
         </div>
       ) : artifact ? (
         <div className="mt-4 space-y-3">
@@ -758,8 +843,8 @@ function ResearchPanel({
         </div>
       ) : (
         <p className="mt-3 text-[11px] leading-5 text-gray-500">
-          Request a Codex analysis to create a saved, question-specific dossier. Viewing saved research and
-          recalculating technicals do not invoke a model.
+          Request a {selectedLabel} analysis to create a saved, question-specific dossier. Viewing saved
+          research and recalculating technicals do not invoke a model.
         </p>
       )}
 
@@ -769,7 +854,8 @@ function ResearchPanel({
           <div>
             <p className="text-[11px] font-medium text-blue-200">Answering from the saved dossier</p>
             <p className="mt-1 text-[10px] leading-4 text-gray-500">
-              Codex is reusing the selected report and will browse only if its evidence is insufficient.
+              {runLabel} is reusing the selected report and will browse only if its evidence is
+              insufficient.
             </p>
           </div>
         </div>
@@ -825,7 +911,7 @@ function ResearchPanel({
       ) : null}
 
         <div className="mt-3 border-t border-violet-400/10 pt-3 text-[9px] leading-4 text-gray-600">
-          ChatGPT/Codex sign-in · no project API key · local reports stay outside Git
+          Local {selectedLabel} sign-in · no project API key · local reports stay outside Git
         </div>
       </section>
       {detailSection && run?.artifact ? (
@@ -1023,18 +1109,22 @@ export default function InvestmentWorkspace() {
   const [ticker, setTicker] = useState("AAPL");
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<TechnicalAnalysis | null>(null);
   const [company, setCompany] = useState<InvestmentCompany | null>(null);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
   const [status, setStatus] = useState<BackendStatus | null>(null);
   const [capabilities, setCapabilities] = useState<ResearchCapabilities | null>(null);
+  const [runner, setRunner] = useState<RunnerId>("codex");
+  const [quickAnswerId, setQuickAnswerId] = useState<string | null>(null);
+  const [quickAnswerLoading, setQuickAnswerLoading] = useState(false);
   const [researchRun, setResearchRun] = useState<ResearchRun | null>(null);
   const [researchHistory, setResearchHistory] = useState<ResearchRun[]>([]);
   const [followUpRun, setFollowUpRun] = useState<FollowUpRun | null>(null);
-  const [codexReview, setCodexReview] = useState<{ ticker: string; question: string } | null>(null);
+  const [researchReview, setResearchReview] = useState<
+    { ticker: string; question: string; runner: RunnerId } | null
+  >(null);
   const [loading, setLoading] = useState(false);
-  const [codexLoading, setCodexLoading] = useState(false);
+  const [researchLoading, setResearchLoading] = useState(false);
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [followUpCancelLoading, setFollowUpCancelLoading] = useState(false);
@@ -1052,8 +1142,10 @@ export default function InvestmentWorkspace() {
   function updateTicker(value: string) {
     const nextTicker = value.toUpperCase().replace(/[^A-Z.-]/g, "").slice(0, 16);
     setTicker(nextTicker);
-    setSessionId(null);
-    setCodexReview(null);
+    setMessages([]);
+    setQuickAnswerId(null);
+    setQuickAnswerLoading(false);
+    setResearchReview(null);
   }
 
   const checkStatus = useCallback(async () => {
@@ -1072,6 +1164,7 @@ export default function InvestmentWorkspace() {
       if (!active) return;
       setStatus(result);
       setCapabilities(researchCapabilities);
+      if (researchCapabilities?.default_runner) setRunner(researchCapabilities.default_runner);
       setStatusLoading(false);
     });
     return () => {
@@ -1083,13 +1176,21 @@ export default function InvestmentWorkspace() {
     if (!normalizedTicker) return;
     let active = true;
     const timeout = window.setTimeout(() => {
-      void fetch("/api/investment-os/research/history?ticker=" + encodeURIComponent(normalizedTicker))
-        .then(async (response) => {
-          if (response.status === 404) return [];
-          if (!response.ok) throw new Error("Could not load saved research.");
-          return (await response.json()) as ResearchRun[];
-        })
-        .then((history) => {
+      const savedResearch = fetch(
+        "/api/investment-os/research/history?ticker=" + encodeURIComponent(normalizedTicker),
+      ).then(async (response) => {
+        if (response.status === 404) return [];
+        if (!response.ok) throw new Error("Could not load saved research.");
+        return (await response.json()) as ResearchRun[];
+      });
+      const savedAnswers = fetch(
+        "/api/investment-os/research/quick-answer?ticker=" + encodeURIComponent(normalizedTicker),
+      ).then(async (response) => {
+        if (!response.ok) throw new Error("Could not load saved questions.");
+        return (await response.json()) as QuickAnswer[];
+      });
+      void Promise.all([savedResearch.catch(() => []), savedAnswers.catch(() => [])])
+        .then(([history, answers]) => {
           if (!active) return;
           setResearchHistory(history);
           const selectedRun =
@@ -1097,14 +1198,21 @@ export default function InvestmentWorkspace() {
             history.find((item) => item.status === "completed") ??
             null;
           setResearchRun(selectedRun);
-          setCodexLoading(Boolean(selectedRun && ["queued", "running"].includes(selectedRun.status)));
+          setResearchLoading(Boolean(selectedRun && ["queued", "running"].includes(selectedRun.status)));
           setFollowUpRun(null);
+          const restored = restoreQuickAnswerHistory(answers);
+          setMessages(restored.messages);
+          setQuickAnswerId(restored.active?.id ?? null);
+          setQuickAnswerLoading(Boolean(restored.active));
         })
         .catch(() => {
           if (!active) return;
           setResearchHistory([]);
           setResearchRun(null);
           setFollowUpRun(null);
+          setMessages([]);
+          setQuickAnswerId(null);
+          setQuickAnswerLoading(false);
         });
     }, 250);
     return () => {
@@ -1124,13 +1232,13 @@ export default function InvestmentWorkspace() {
           if (!active) return;
           setResearchRun(run);
           if (["completed", "failed", "cancelled"].includes(run.status)) {
-            setCodexLoading(false);
+            setResearchLoading(false);
             setResearchHistory((current) => [run, ...current.filter((item) => item.id !== run.id)]);
             window.clearInterval(interval);
           }
         })
         .catch(() => {
-          if (active) setCodexLoading(false);
+          if (active) setResearchLoading(false);
         });
     }, 3000);
     return () => {
@@ -1138,6 +1246,58 @@ export default function InvestmentWorkspace() {
       window.clearInterval(interval);
     };
   }, [researchRun]);
+
+  // Poll the queued quick answer and resolve the pending chat bubble in place.
+  useEffect(() => {
+    if (!quickAnswerId) return;
+    let active = true;
+    const interval = window.setInterval(() => {
+      void jsonRequest<QuickAnswer>(
+        "/api/investment-os/research/quick-answer/" + encodeURIComponent(quickAnswerId),
+      )
+        .then((answer) => {
+          if (!active || ["queued", "running"].includes(answer.status)) return;
+          window.clearInterval(interval);
+          setQuickAnswerId(null);
+          setQuickAnswerLoading(false);
+          setMessages((current) => {
+            const settled = current.filter((item) => !item.pending);
+            if (answer.status === "completed" && answer.artifact) {
+              return [
+                ...settled,
+                {
+                  role: "assistant",
+                  content: answer.artifact.answer,
+                  quickAnswer: answer.artifact,
+                },
+              ];
+            }
+            if (answer.status === "cancelled") {
+              return [...settled, { role: "assistant", content: "That question was cancelled." }];
+            }
+            return [
+              ...settled,
+              {
+                role: "assistant",
+                content: answer.error || "That question could not be answered.",
+              },
+            ];
+          });
+        })
+        .catch((reason) => {
+          if (!active) return;
+          window.clearInterval(interval);
+          setQuickAnswerId(null);
+          setQuickAnswerLoading(false);
+          setError(reason instanceof Error ? reason.message : "Lost track of that question.");
+          setMessages((current) => current.filter((item) => !item.pending));
+        });
+    }, 2000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [quickAnswerId]);
 
   useEffect(() => {
     if (!followUpRun || !["queued", "running"].includes(followUpRun.status)) return;
@@ -1170,54 +1330,98 @@ export default function InvestmentWorkspace() {
     };
   }, [followUpRun]);
 
-  async function runResearch(event: FormEvent) {
-    event.preventDefault();
-    if (!normalizedTicker || !question.trim()) return;
-    const prompt = question.trim();
+  async function runSignals() {
+    if (!normalizedTicker || loading) return;
     setLoading(true);
     setError("");
-    setMessages((current) => [...current, { role: "user", content: prompt }]);
     try {
-      const result = await jsonRequest<ResearchResponse>("/api/investment-os/analyze", {
+      const result = await jsonRequest<SignalsResponse>("/api/investment-os/signals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker: normalizedTicker, message: prompt, sessionId }),
+        body: JSON.stringify({ ticker: normalizedTicker }),
       });
-      setSessionId(result.sessionId);
       setAnalysis(result.technical);
       setCompany(result.company);
       setEvidence(result.evidence);
-      setMessages((current) => [...current, { role: "assistant", content: result.reply }]);
     } catch (reason) {
-      const message = reason instanceof Error ? reason.message : "Research request failed.";
+      const message = reason instanceof Error ? reason.message : "Signal refresh failed.";
       setError(message);
-      setMessages((current) => [
-        ...current,
-        { role: "assistant", content: "I could not complete that analysis. " + message },
-      ]);
     } finally {
       setLoading(false);
     }
   }
 
-  function reviewCodexResearch() {
-    if (!normalizedTicker || !question.trim()) return;
-    setError("");
-    setCodexReview({ ticker: normalizedTicker, question: question.trim() });
+  function submitQuestion(event: FormEvent) {
+    event.preventDefault();
+    void askQuickAnswer();
   }
 
-  async function requestCodexResearch() {
-    if (!codexReview) return;
-    const request = codexReview;
-    setCodexReview(null);
-    setCodexLoading(true);
+  async function askQuickAnswer() {
+    if (!normalizedTicker || !question.trim() || quickAnswerLoading) return;
+    const prompt = question.trim();
+    const label = runnerLabel(capabilities, runner);
+    setQuickAnswerLoading(true);
+    setError("");
+    setMessages((current) => [
+      ...current,
+      { role: "user", content: prompt },
+      { role: "assistant", content: `${label} is looking that up…`, pending: true },
+    ]);
+    try {
+      const queued = await jsonRequest<QuickAnswer>("/api/investment-os/research/quick-answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker: normalizedTicker, question: prompt, runner }),
+      });
+      setQuickAnswerId(queued.id);
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : "Could not ask that question.";
+      setError(message);
+      setQuickAnswerLoading(false);
+      setMessages((current) => [
+        ...current.filter((item) => !item.pending),
+        { role: "assistant", content: "I could not answer that. " + message },
+      ]);
+    }
+  }
+
+  async function cancelQuickAnswer() {
+    if (!quickAnswerId) return;
+    const id = quickAnswerId;
+    setQuickAnswerId(null);
+    setQuickAnswerLoading(false);
+    try {
+      await jsonRequest<QuickAnswer>(
+        `/api/investment-os/research/quick-answer/${encodeURIComponent(id)}/cancel`,
+        { method: "POST" },
+      );
+    } catch {
+      // The record is already gone or finished; the thread message is enough.
+    }
+    setMessages((current) => [
+      ...current.filter((item) => !item.pending),
+      { role: "assistant", content: "That question was cancelled." },
+    ]);
+  }
+
+  function reviewResearchRequest() {
+    if (!normalizedTicker || !question.trim()) return;
+    setError("");
+    setResearchReview({ ticker: normalizedTicker, question: question.trim(), runner });
+  }
+
+  async function requestResearchRun() {
+    if (!researchReview) return;
+    const request = researchReview;
+    setResearchReview(null);
+    setResearchLoading(true);
     setError("");
     setMessages((current) => [...current, { role: "user", content: request.question }]);
     try {
       const run = await jsonRequest<ResearchRun>("/api/investment-os/research/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request),
+        body: JSON.stringify({ ...request, runner: request.runner }),
       });
       setResearchRun(run);
       setResearchHistory((current) => [run, ...current.filter((item) => item.id !== run.id)]);
@@ -1228,17 +1432,19 @@ export default function InvestmentWorkspace() {
         {
           role: "assistant",
           content:
-            "Codex analysis is queued. The saved dossier will appear in the research panel when complete.",
+            `${runnerLabel(capabilities, request.runner)} analysis is queued. The saved dossier will ` +
+            "appear in the research panel when complete.",
         },
       ]);
     } catch (reason) {
-      const message = reason instanceof Error ? reason.message : "Could not request Codex analysis.";
+      const message =
+        reason instanceof Error ? reason.message : "Could not request the analysis.";
       setError(message);
-      setCodexLoading(false);
+      setResearchLoading(false);
     }
   }
 
-  async function cancelCodexResearch() {
+  async function cancelResearchRun() {
     if (!researchRun || !["queued", "running"].includes(researchRun.status)) return;
     setCancelLoading(true);
     setError("");
@@ -1249,19 +1455,19 @@ export default function InvestmentWorkspace() {
       );
       setResearchRun(run);
       setResearchHistory((current) => [run, ...current.filter((item) => item.id !== run.id)]);
-      setCodexLoading(false);
+      setResearchLoading(false);
       setMessages((current) => [
         ...current,
-        { role: "assistant", content: "Codex analysis was cancelled. No dossier was saved." },
+        { role: "assistant", content: "The analysis was cancelled. No dossier was saved." },
       ]);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Could not cancel Codex analysis.");
+      setError(reason instanceof Error ? reason.message : "Could not cancel the analysis.");
     } finally {
       setCancelLoading(false);
     }
   }
 
-  async function requestCodexFollowUp() {
+  async function requestFollowUpRun() {
     if (!normalizedTicker || !question.trim() || researchRun?.status !== "completed") return;
     const prompt = question.trim();
     setFollowUpLoading(true);
@@ -1275,6 +1481,7 @@ export default function InvestmentWorkspace() {
           ticker: normalizedTicker,
           question: prompt,
           researchRunId: researchRun.id,
+          runner,
         }),
       });
       setFollowUpRun(run);
@@ -1282,7 +1489,7 @@ export default function InvestmentWorkspace() {
         ...current,
         {
           role: "assistant",
-          content: "Codex is answering from the selected saved dossier.",
+          content: `${runnerLabel(capabilities, runner)} is answering from the selected saved dossier.`,
         },
       ]);
     } catch (reason) {
@@ -1292,7 +1499,7 @@ export default function InvestmentWorkspace() {
     }
   }
 
-  async function cancelCodexFollowUp() {
+  async function cancelFollowUpRun() {
     if (!followUpRun || !["queued", "running"].includes(followUpRun.status)) return;
     setFollowUpCancelLoading(true);
     setError("");
@@ -1307,10 +1514,10 @@ export default function InvestmentWorkspace() {
       setFollowUpLoading(false);
       setMessages((current) => [
         ...current,
-        { role: "assistant", content: "The Codex follow-up was cancelled." },
+        { role: "assistant", content: "The follow-up was cancelled." },
       ]);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Could not cancel the Codex follow-up.");
+      setError(reason instanceof Error ? reason.message : "Could not cancel the follow-up.");
     } finally {
       setFollowUpCancelLoading(false);
     }
@@ -1326,10 +1533,11 @@ export default function InvestmentWorkspace() {
                 <Sparkles size={12} /> Evidence-first research workspace
               </div>
               <h1 className="text-xl font-semibold tracking-tight text-white">
-                Ask a company question. Choose quick signals or a full Codex dossier.
+                Ask a company question. Get a cited answer in chat, or commission a full dossier.
               </h1>
               <p className="mt-1 max-w-2xl text-xs leading-5 text-gray-500">
-                Deterministic calculations stay separate from question-specific Codex research and cited sources.
+                Deterministic calculations stay separate from question-specific model research and cited
+                sources.
               </p>
             </div>
             <button
@@ -1393,7 +1601,17 @@ export default function InvestmentWorkspace() {
                           : "max-w-[88%] rounded-2xl rounded-bl-md border border-gray-800 bg-gray-900 px-4 py-3 text-sm leading-6 text-gray-200"
                       }
                     >
-                      {message.content}
+                      {message.pending ? (
+                        <span className="flex items-center gap-2 text-gray-400">
+                          <LoaderCircle size={13} className="animate-spin text-violet-300" />
+                          {message.content}
+                        </span>
+                      ) : (
+                        message.content
+                      )}
+                      {message.quickAnswer ? (
+                        <QuickAnswerDetail artifact={message.quickAnswer} />
+                      ) : null}
                     </div>
                   </div>
                 ))}
@@ -1407,7 +1625,52 @@ export default function InvestmentWorkspace() {
             )}
           </div>
 
-          <form onSubmit={runResearch} className="border-t border-gray-800 bg-gray-950 p-4">
+          <form onSubmit={submitQuestion} className="border-t border-gray-800 bg-gray-950 p-4">
+            <div className="mx-auto mb-2 flex max-w-3xl items-center gap-2">
+              <span className="text-[9px] font-semibold uppercase tracking-wide text-gray-600">
+                Research agent
+              </span>
+              <div
+                role="radiogroup"
+                aria-label="Research agent"
+                className="flex gap-1 rounded-lg border border-gray-800 bg-gray-900 p-0.5"
+              >
+                {RUNNER_IDS.map((option) => {
+                  const optionReady = runnerReady(capabilities, option);
+                  const selected = runner === option;
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      disabled={!optionReady}
+                      title={
+                        optionReady
+                          ? undefined
+                          : `${runnerLabel(capabilities, option)} is not available locally`
+                      }
+                      onClick={() => {
+                        setRunner(option);
+                        setResearchReview(null);
+                      }}
+                      className={
+                        "rounded-md px-2.5 py-1 text-[10px] font-semibold transition " +
+                        (selected
+                          ? "bg-violet-600 text-white"
+                          : "text-gray-400 hover:text-gray-200") +
+                        (optionReady ? "" : " cursor-not-allowed opacity-40")
+                      }
+                    >
+                      {runnerLabel(capabilities, option)}
+                    </button>
+                  );
+                })}
+              </div>
+              <span className="text-[9px] text-gray-700">
+                Local sign-in · no project API key
+              </span>
+            </div>
             <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-xl border border-gray-700 bg-gray-900 p-2 focus-within:border-blue-500">
               <div className="shrink-0 border-r border-gray-800 px-2 pb-1">
                 <label className="block text-[9px] font-semibold uppercase tracking-wide text-gray-600">
@@ -1424,10 +1687,10 @@ export default function InvestmentWorkspace() {
                 value={question}
                 onChange={(event) => {
                   setQuestion(event.target.value);
-                  setCodexReview(null);
+                  setResearchReview(null);
                 }}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
+                  if (isAskShortcut(event.key, event.shiftKey)) {
                     event.preventDefault();
                     event.currentTarget.form?.requestSubmit();
                   }
@@ -1438,55 +1701,82 @@ export default function InvestmentWorkspace() {
                 aria-label="Research question"
               />
               <div className="flex shrink-0 flex-col gap-1.5">
+                {quickAnswerLoading ? (
+                  <button
+                    type="button"
+                    onClick={() => void cancelQuickAnswer()}
+                    className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-rose-400/25 bg-rose-400/10 px-3 text-[11px] font-semibold text-rose-200 hover:bg-rose-400/15"
+                    aria-label="Cancel the question"
+                  >
+                    <Square size={12} />
+                    Cancel
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={
+                      !normalizedTicker ||
+                      !question.trim() ||
+                      !status?.connected ||
+                      !runnerReady(capabilities, runner)
+                    }
+                    className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Ask this question and answer in the chat"
+                  >
+                    <MessageSquareText size={14} />
+                    Ask
+                  </button>
+                )}
                 <button
-                  disabled={loading || !normalizedTicker || !question.trim() || !status?.connected}
-                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Calculate quick signals"
+                  type="button"
+                  onClick={() => void runSignals()}
+                  disabled={loading || !normalizedTicker || !status?.connected}
+                  title="Recalculates trend, momentum and drawdown. Does not read your question."
+                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-700 px-3 text-[11px] font-semibold text-gray-300 hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Recalculate technical signals; does not read the question"
                 >
                   {loading ? <LoaderCircle size={14} className="animate-spin" /> : <Activity size={14} />}
-                  Quick signals
+                  Signals
                 </button>
                 {researchActive ? (
                   <button
                     type="button"
-                    onClick={() => void cancelCodexResearch()}
+                    onClick={() => void cancelResearchRun()}
                     disabled={cancelLoading}
                     className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-rose-400/25 bg-rose-400/10 px-3 text-[11px] font-semibold text-rose-200 hover:bg-rose-400/15 disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Cancel Codex analysis"
+                    aria-label="Cancel the running analysis"
                   >
                     {cancelLoading ? (
                       <LoaderCircle size={14} className="animate-spin" />
                     ) : (
                       <Square size={12} />
                     )}
-                    Cancel Codex
+                    Cancel run
                   </button>
                 ) : (
                   <button
                     type="button"
-                    onClick={reviewCodexResearch}
+                    onClick={reviewResearchRequest}
                     disabled={
-                      codexLoading ||
+                      researchLoading ||
                       !normalizedTicker ||
                       !question.trim() ||
-                      !capabilities?.codex.enabled ||
-                      !capabilities.codex.installed ||
-                      !capabilities.codex.authenticated
+                      !runnerReady(capabilities, runner)
                     }
                     className="flex h-9 items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3 text-[11px] font-semibold text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Review Codex analysis request"
+                    aria-label="Review the analysis request"
                   >
                     <Sparkles size={14} />
-                    Request Codex
+                    Request {runnerLabel(capabilities, runner)}
                   </button>
                 )}
                 {followUpActive ? (
                   <button
                     type="button"
-                    onClick={() => void cancelCodexFollowUp()}
+                    onClick={() => void cancelFollowUpRun()}
                     disabled={followUpCancelLoading}
                     className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-rose-400/25 bg-rose-400/10 px-3 text-[11px] font-semibold text-rose-200 hover:bg-rose-400/15 disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Cancel Codex follow-up"
+                    aria-label="Cancel the running follow-up"
                   >
                     {followUpCancelLoading ? (
                       <LoaderCircle size={14} className="animate-spin" />
@@ -1498,12 +1788,12 @@ export default function InvestmentWorkspace() {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => void requestCodexFollowUp()}
+                    onClick={() => void requestFollowUpRun()}
                     disabled={
                       followUpLoading ||
                       researchRun?.status !== "completed" ||
                       !question.trim() ||
-                      !capabilities?.codex.authenticated
+                      !runnerReady(capabilities, runner)
                     }
                     className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-blue-400/25 bg-blue-400/10 px-3 text-[11px] font-semibold text-blue-200 hover:bg-blue-400/15 disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label="Ask a follow-up using saved research"
@@ -1518,49 +1808,51 @@ export default function InvestmentWorkspace() {
                 )}
               </div>
             </div>
-            {codexReview ? (
+            {researchReview ? (
               <div
                 role="dialog"
-                aria-label="Review Codex request"
+                aria-label="Review research request"
                 className="mx-auto mt-3 max-w-3xl rounded-xl border border-violet-400/25 bg-violet-400/[0.06] p-3"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-300">
-                      Review before starting Codex
+                      Review before starting {runnerLabel(capabilities, researchReview.runner)}
                     </p>
                     <p className="mt-1 text-[10px] text-gray-500">
-                      Nothing has been queued yet. This run will use your Codex allowance.
+                      Nothing has been queued yet. This run will use your{" "}
+                      {runnerLabel(capabilities, researchReview.runner)} allowance.
                     </p>
                   </div>
                   <span className="rounded-md border border-gray-700 bg-gray-950 px-2 py-1 text-[10px] font-bold text-blue-300">
-                    {codexReview.ticker}
+                    {researchReview.ticker}
                   </span>
                 </div>
                 <p className="mt-3 rounded-lg border border-gray-800 bg-gray-950/70 px-3 py-2 text-xs leading-5 text-gray-200">
-                  {codexReview.question}
+                  {researchReview.question}
                 </p>
                 <div className="mt-3 flex justify-end gap-2">
                   <button
                     type="button"
-                    onClick={() => setCodexReview(null)}
+                    onClick={() => setResearchReview(null)}
                     className="rounded-lg border border-gray-700 px-3 py-2 text-[11px] font-semibold text-gray-300 hover:bg-gray-800"
                   >
                     Edit question
                   </button>
                   <button
                     type="button"
-                    onClick={() => void requestCodexResearch()}
+                    onClick={() => void requestResearchRun()}
                     className="rounded-lg bg-violet-600 px-3 py-2 text-[11px] font-semibold text-white hover:bg-violet-500"
                   >
-                    Start Codex analysis
+                    Start {runnerLabel(capabilities, researchReview.runner)} analysis
                   </button>
                 </div>
               </div>
             ) : null}
             {error ? <p className="mx-auto mt-2 max-w-3xl text-xs text-rose-300">{error}</p> : null}
             <p className="mx-auto mt-2 max-w-3xl text-center text-[10px] text-gray-700">
-              Quick signals use no model. Full dossiers and targeted follow-ups use your Codex allowance.
+              Signals are deterministic and ignore your question. Ask answers it in chat with one{" "}
+              {runnerLabel(capabilities, runner)} call; a full dossier costs far more.
             </p>
           </form>
         </div>
@@ -1587,7 +1879,8 @@ export default function InvestmentWorkspace() {
             }}
             followUp={followUpRun}
             capabilities={capabilities}
-            loading={codexLoading}
+            runner={runner}
+            loading={researchLoading}
             followUpLoading={followUpLoading}
           />
         </div>
@@ -1598,6 +1891,7 @@ export default function InvestmentWorkspace() {
             ticker={normalizedTicker}
             question={question}
             capabilities={capabilities}
+            runner={runner}
           />
         </div>
 
@@ -1626,7 +1920,7 @@ export default function InvestmentWorkspace() {
             <ShieldCheck size={14} /> Foundation mode
           </div>
           <p className="mt-2 text-[11px] leading-5 text-gray-500">
-            Deterministic technicals remain authoritative. Codex dossiers are validated, versioned and saved
+            Deterministic technicals remain authoritative. Saved dossiers are validated, versioned and saved
             locally before the UI displays their perspectives, sources and disagreements.
           </p>
           <div className="mt-3 flex items-center gap-1.5 text-[10px] text-gray-600">

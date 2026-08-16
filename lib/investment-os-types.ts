@@ -52,6 +52,13 @@ export interface ResearchResponse {
   marketDataSource: string;
 }
 
+export interface SignalsResponse {
+  technical: TechnicalAnalysis;
+  company: InvestmentCompany | null;
+  evidence: EvidenceItem[];
+  marketDataSource: string;
+}
+
 export interface BackendStatus {
   connected: boolean;
   service: string;
@@ -66,6 +73,12 @@ export interface ResearchSource {
   published_at: string | null;
   retrieved_at: string;
   source_type: string;
+}
+
+export interface ResearchClaim {
+  statement: string;
+  classification: "fact" | "inference" | "assumption" | "calculation";
+  source_ids: string[];
 }
 
 export interface ResearchPerspective {
@@ -210,20 +223,124 @@ export interface ValuationResponse {
   disclaimer: string;
 }
 
+export type RunnerId = "codex" | "claude";
+
+export type CouncilAgentName =
+  | "evidence"
+  | "valuation"
+  | "bear"
+  | "buffett"
+  | "munger"
+  | "fisher"
+  | "asymmetric_growth"
+  | "technical_momentum"
+  | "macro_industry";
+
+/** Mirrors ALL_COUNCIL_AGENTS in the backend council contract, in the same order. */
+export const COUNCIL_AGENTS: CouncilAgentName[] = [
+  "evidence",
+  "valuation",
+  "bear",
+  "buffett",
+  "munger",
+  "fisher",
+  "asymmetric_growth",
+  "technical_momentum",
+  "macro_industry",
+];
+
+/** The backend rejects fewer than two agents; the CIO synthesis is the extra call. */
+export const MINIMUM_COUNCIL_AGENTS = 2;
+
+export interface RunnerCapability {
+  id: RunnerId;
+  label: string;
+  enabled: boolean;
+  installed: boolean;
+  authenticated: boolean;
+  authentication: string;
+  version: string | null;
+}
+
+export interface QuickAnswerArtifact {
+  schema_version: "1.0";
+  ticker: string;
+  question: string;
+  generated_at: string;
+  as_of: string;
+  answer: string;
+  claims: ResearchClaim[];
+  limitations: string[];
+  sources: ResearchSource[];
+  disclaimer: string;
+}
+
+export interface QuickAnswer {
+  id: string;
+  ticker: string;
+  company_name: string;
+  question: string;
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
+  runner: string;
+  artifact: QuickAnswerArtifact | null;
+  artifact_path: string | null;
+  markdown_path: string | null;
+  error: string | null;
+  requested_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
 export interface ResearchCapabilities {
+  /** Retained for older builds; prefer `runners`. */
   codex: {
     enabled: boolean;
     installed: boolean;
     authenticated: boolean;
     authentication: string;
   };
+  runners?: Record<RunnerId, RunnerCapability>;
+  default_runner?: RunnerId;
   api_key_required: boolean;
   durable_jobs?: boolean;
   independent_council: {
     default_agents: number;
     maximum_codex_calls: number;
+    maximum_model_calls?: number;
     explicit_confirmation_required: boolean;
   };
+}
+
+export const RUNNER_IDS: RunnerId[] = ["codex", "claude"];
+
+export function runnerLabel(
+  capabilities: ResearchCapabilities | null,
+  runner: RunnerId,
+): string {
+  return capabilities?.runners?.[runner]?.label ?? (runner === "claude" ? "Claude Code" : "Codex");
+}
+
+/** Recover the runner id from a stored run value such as `claude_local`. */
+export function runnerIdFromValue(stored: string | null | undefined): RunnerId {
+  const candidate = stored?.split("_")[0];
+  return RUNNER_IDS.includes(candidate as RunnerId) ? (candidate as RunnerId) : "codex";
+}
+
+export function runnerReady(
+  capabilities: ResearchCapabilities | null,
+  runner: RunnerId,
+): boolean {
+  const capability = capabilities?.runners?.[runner];
+  if (capability) {
+    return capability.enabled && capability.installed && capability.authenticated;
+  }
+  // A backend without the runners map only ever supports Codex.
+  if (runner !== "codex" || !capabilities) return false;
+  return (
+    capabilities.codex.enabled &&
+    capabilities.codex.installed &&
+    capabilities.codex.authenticated
+  );
 }
 
 export interface SourceFreshness {
