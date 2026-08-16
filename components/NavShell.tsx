@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { BrainCircuit, FileSpreadsheet, LibraryBig, Scale, TrendingUp } from "lucide-react";
+import {
+  BrainCircuit,
+  ChartNoAxesCombined,
+  FileSpreadsheet,
+  LibraryBig,
+  Scale,
+  TrendingUp,
+} from "lucide-react";
 
 const TABS = [
   { href: "/",       label: "My Portfolio",    key: "portfolio" },
@@ -7,6 +14,7 @@ const TABS = [
   { href: "/fallen", label: "Fallen Angels",   key: "fallen"    },
   { href: "/rising", label: "Rising Angels",   key: "rising"    },
   { href: "/research", label: "Investment OS", key: "research", icon: BrainCircuit },
+  { href: "/prices", label: "Price History", key: "prices", icon: ChartNoAxesCombined },
   { href: "/financials", label: "Financials", key: "financials", icon: FileSpreadsheet },
   { href: "/decisions", label: "Decision Tools", key: "decisions", icon: Scale },
   { href: "/industries", label: "Industry Research", key: "industries", icon: LibraryBig },
