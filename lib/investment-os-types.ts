@@ -52,6 +52,13 @@ export interface ResearchResponse {
   marketDataSource: string;
 }
 
+export interface SignalsResponse {
+  technical: TechnicalAnalysis;
+  company: InvestmentCompany | null;
+  evidence: EvidenceItem[];
+  marketDataSource: string;
+}
+
 export interface BackendStatus {
   connected: boolean;
   service: string;

@@ -30,6 +30,7 @@ import {
   runnerLabel,
   runnerReady,
 } from "@/lib/investment-os-types";
+import { isAskShortcut, restoreQuickAnswerHistory } from "@/lib/research-chat";
 import type {
   BackendStatus,
   EvidenceItem,
@@ -39,10 +40,10 @@ import type {
   ResearchPerspective,
   ResearchRun,
   ResearchSource,
-  ResearchResponse,
   QuickAnswer,
   QuickAnswerArtifact,
   RunnerId,
+  SignalsResponse,
   TechnicalAnalysis,
 } from "@/lib/investment-os-types";
 import IndependentCouncilPanel from "@/components/IndependentCouncilPanel";
@@ -1108,7 +1109,6 @@ export default function InvestmentWorkspace() {
   const [ticker, setTicker] = useState("AAPL");
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<TechnicalAnalysis | null>(null);
   const [company, setCompany] = useState<InvestmentCompany | null>(null);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
@@ -1142,7 +1142,9 @@ export default function InvestmentWorkspace() {
   function updateTicker(value: string) {
     const nextTicker = value.toUpperCase().replace(/[^A-Z.-]/g, "").slice(0, 16);
     setTicker(nextTicker);
-    setSessionId(null);
+    setMessages([]);
+    setQuickAnswerId(null);
+    setQuickAnswerLoading(false);
     setResearchReview(null);
   }
 
@@ -1174,13 +1176,21 @@ export default function InvestmentWorkspace() {
     if (!normalizedTicker) return;
     let active = true;
     const timeout = window.setTimeout(() => {
-      void fetch("/api/investment-os/research/history?ticker=" + encodeURIComponent(normalizedTicker))
-        .then(async (response) => {
-          if (response.status === 404) return [];
-          if (!response.ok) throw new Error("Could not load saved research.");
-          return (await response.json()) as ResearchRun[];
-        })
-        .then((history) => {
+      const savedResearch = fetch(
+        "/api/investment-os/research/history?ticker=" + encodeURIComponent(normalizedTicker),
+      ).then(async (response) => {
+        if (response.status === 404) return [];
+        if (!response.ok) throw new Error("Could not load saved research.");
+        return (await response.json()) as ResearchRun[];
+      });
+      const savedAnswers = fetch(
+        "/api/investment-os/research/quick-answer?ticker=" + encodeURIComponent(normalizedTicker),
+      ).then(async (response) => {
+        if (!response.ok) throw new Error("Could not load saved questions.");
+        return (await response.json()) as QuickAnswer[];
+      });
+      void Promise.all([savedResearch.catch(() => []), savedAnswers.catch(() => [])])
+        .then(([history, answers]) => {
           if (!active) return;
           setResearchHistory(history);
           const selectedRun =
@@ -1190,12 +1200,19 @@ export default function InvestmentWorkspace() {
           setResearchRun(selectedRun);
           setResearchLoading(Boolean(selectedRun && ["queued", "running"].includes(selectedRun.status)));
           setFollowUpRun(null);
+          const restored = restoreQuickAnswerHistory(answers);
+          setMessages(restored.messages);
+          setQuickAnswerId(restored.active?.id ?? null);
+          setQuickAnswerLoading(Boolean(restored.active));
         })
         .catch(() => {
           if (!active) return;
           setResearchHistory([]);
           setResearchRun(null);
           setFollowUpRun(null);
+          setMessages([]);
+          setQuickAnswerId(null);
+          setQuickAnswerLoading(false);
         });
     }, 250);
     return () => {
@@ -1313,34 +1330,30 @@ export default function InvestmentWorkspace() {
     };
   }, [followUpRun]);
 
-  async function runResearch(event: FormEvent) {
-    event.preventDefault();
-    if (!normalizedTicker || !question.trim()) return;
-    const prompt = question.trim();
+  async function runSignals() {
+    if (!normalizedTicker || loading) return;
     setLoading(true);
     setError("");
-    setMessages((current) => [...current, { role: "user", content: prompt }]);
     try {
-      const result = await jsonRequest<ResearchResponse>("/api/investment-os/analyze", {
+      const result = await jsonRequest<SignalsResponse>("/api/investment-os/signals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker: normalizedTicker, message: prompt, sessionId }),
+        body: JSON.stringify({ ticker: normalizedTicker }),
       });
-      setSessionId(result.sessionId);
       setAnalysis(result.technical);
       setCompany(result.company);
       setEvidence(result.evidence);
-      setMessages((current) => [...current, { role: "assistant", content: result.reply }]);
     } catch (reason) {
-      const message = reason instanceof Error ? reason.message : "Research request failed.";
+      const message = reason instanceof Error ? reason.message : "Signal refresh failed.";
       setError(message);
-      setMessages((current) => [
-        ...current,
-        { role: "assistant", content: "I could not complete that analysis. " + message },
-      ]);
     } finally {
       setLoading(false);
     }
+  }
+
+  function submitQuestion(event: FormEvent) {
+    event.preventDefault();
+    void askQuickAnswer();
   }
 
   async function askQuickAnswer() {
@@ -1612,7 +1625,7 @@ export default function InvestmentWorkspace() {
             )}
           </div>
 
-          <form onSubmit={runResearch} className="border-t border-gray-800 bg-gray-950 p-4">
+          <form onSubmit={submitQuestion} className="border-t border-gray-800 bg-gray-950 p-4">
             <div className="mx-auto mb-2 flex max-w-3xl items-center gap-2">
               <span className="text-[9px] font-semibold uppercase tracking-wide text-gray-600">
                 Research agent
@@ -1677,7 +1690,7 @@ export default function InvestmentWorkspace() {
                   setResearchReview(null);
                 }}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
+                  if (isAskShortcut(event.key, event.shiftKey)) {
                     event.preventDefault();
                     event.currentTarget.form?.requestSubmit();
                   }
@@ -1700,8 +1713,7 @@ export default function InvestmentWorkspace() {
                   </button>
                 ) : (
                   <button
-                    type="button"
-                    onClick={() => void askQuickAnswer()}
+                    type="submit"
                     disabled={
                       !normalizedTicker ||
                       !question.trim() ||
@@ -1716,6 +1728,8 @@ export default function InvestmentWorkspace() {
                   </button>
                 )}
                 <button
+                  type="button"
+                  onClick={() => void runSignals()}
                   disabled={loading || !normalizedTicker || !status?.connected}
                   title="Recalculates trend, momentum and drawdown. Does not read your question."
                   className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-700 px-3 text-[11px] font-semibold text-gray-300 hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"

@@ -8,6 +8,25 @@ function requestedRunner(value: unknown): RunnerId | undefined {
   return RUNNER_IDS.includes(value as RunnerId) ? (value as RunnerId) : undefined;
 }
 
+export async function GET(request: NextRequest) {
+  const ticker = request.nextUrl.searchParams.get("ticker")?.trim().toUpperCase();
+  if (!ticker) {
+    return NextResponse.json({ error: "Ticker is required." }, { status: 400 });
+  }
+  try {
+    const history = await investmentOsRequest<QuickAnswer[]>(
+      "/api/v1/research/companies/" +
+        encodeURIComponent(ticker) +
+        "/quick-answers?limit=50",
+    );
+    return NextResponse.json(history);
+  } catch (error) {
+    const failure = publicError(error);
+    if (failure.status === 404) return NextResponse.json([]);
+    return NextResponse.json({ error: failure.message }, { status: failure.status });
+  }
+}
+
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as {
     ticker?: string;
