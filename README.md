@@ -21,6 +21,12 @@ Fisher, Asymmetric Growth, Technical/Momentum, and Macro/Industry reasoning. Eac
 cited claims, risks, invalidation conditions, and unresolved questions. The exact saved Markdown can be
 opened or copied from that reader. Reports remain local and outside Git.
 
+The top navigation's **Financials** dashboard shows five, ten, fifteen, or twenty years of normalized
+annual income statements, balance sheets, cash-flow statements, and calculated free cash flow. It uses
+stored official SEC XBRL facts, links every available value to its filing, preserves restatements, and
+leaves unavailable facts blank rather than estimating them. **Refresh SEC data** is an explicit public
+data fetch; simply opening the dashboard is a local, model-free read.
+
 The top navigation also includes **Industry Research**. It renders the local portfolio policy, AI
 infrastructure, quantum-computing, biotech/AI-medicine, and dated review Markdown files. Its search returns
 matching passages across the whole local library. Reading and searching these files is deterministic and
@@ -93,7 +99,8 @@ npm run dev
 
 Open [http://localhost:3000/research](http://localhost:3000/research) for company work or
 [http://localhost:3000/decisions](http://localhost:3000/decisions) for evidence, watches, reminders, and
-company comparison. Open [http://localhost:3000/industries](http://localhost:3000/industries) for the
+company comparison. Open [http://localhost:3000/financials](http://localhost:3000/financials) for annual
+financial statements, and [http://localhost:3000/industries](http://localhost:3000/industries) for the
 searchable industry library.
 The backend defaults to
 `http://127.0.0.1:8000`; set `INVESTMENT_OS_API_URL` locally only if that changes.
