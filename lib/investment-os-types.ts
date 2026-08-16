@@ -365,6 +365,49 @@ export interface ProviderDataStatus {
   sources: SourceFreshness[];
 }
 
+export interface AnnualFinancialPeriod {
+  fiscal_year: number;
+  label: string;
+  period_end: string;
+}
+
+export interface AnnualFinancialValue {
+  period_end: string;
+  value: number;
+  unit: string;
+  filed_at: string | null;
+  accession_number: string | null;
+  source_url: string;
+  calculation: string | null;
+}
+
+export interface AnnualFinancialMetric {
+  key: string;
+  label: string;
+  value_kind: "currency" | "per_share" | "shares";
+  emphasis: boolean;
+  values: AnnualFinancialValue[];
+}
+
+export interface AnnualFinancialStatement {
+  key: "income" | "balance_sheet" | "cash_flow";
+  title: string;
+  metrics: AnnualFinancialMetric[];
+}
+
+export interface FinancialStatementDashboard {
+  ticker: string;
+  company_name: string;
+  currency: string;
+  requested_years: number;
+  periods: AnnualFinancialPeriod[];
+  statements: AnnualFinancialStatement[];
+  provider: string;
+  provider_url: string;
+  last_refreshed_at: string | null;
+  warnings: string[];
+}
+
 export interface WatchEvent {
   id: string;
   event_date: string;
