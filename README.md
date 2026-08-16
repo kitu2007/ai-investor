@@ -3,13 +3,17 @@
 This private Next.js application is the local, non-technical workspace for Investment OS. It connects to
 the FastAPI backend in the sibling `investment-os` directory and separates two kinds of work:
 
-- **Quick signals** fetch daily ticker and SPY prices, then calculate moving averages, RSI, MACD,
+- **Signals** fetch daily ticker and SPY prices, then calculate moving averages, RSI, MACD,
   drawdown, momentum, and relative strength without an LLM. The same provider-labelled observations are
-  persisted in the local backend with source URL, retrieval time, and idempotent date keys.
-- **Request Codex** sends the question and authoritative technical snapshot to the local backend, which
-  creates a validated, saved, multi-perspective research dossier using the Mac's existing ChatGPT/Codex
-  sign-in. No project API key is required. The first click opens a review step; nothing is queued until
-  **Start Codex analysis** is pressed. Queued or running requests can be cancelled from the same control.
+  persisted in the local backend with source URL, retrieval time, and idempotent date keys. Signals do not
+  read the question or create a chat response.
+- **Ask** sends one direct question to the selected local Codex or Claude Code runner. Enter submits Ask;
+  Shift+Enter adds a new line. Each answer has cited claims and sources, is saved locally as JSON and
+  Markdown, and reappears in the ticker's chat history. A running question can be cancelled.
+- **Request Codex/Claude Code** sends the question and authoritative technical snapshot to the selected
+  local runner, which creates a validated, saved, multi-perspective research dossier using the Mac's
+  existing account sign-in. No project API key is required. The first click opens a review step; nothing
+  is queued until **Start analysis** is pressed. Queued or running requests can be cancelled.
 
 The UI shows the dossier's synthesis, bear/base/bull scenarios, independent views, disagreements, and
 sources. Choose **Read full dossier** for the complete Evidence, Valuation, Bear, Buffett, Munger,
@@ -20,7 +24,7 @@ opened or copied from that reader. Reports remain local and outside Git.
 The top navigation also includes **Industry Research**. It renders the local portfolio policy, AI
 infrastructure, quantum-computing, biotech/AI-medicine, and dated review Markdown files. Its search returns
 matching passages across the whole local library. Reading and searching these files is deterministic and
-does not call Codex or require an API key. The backend exposes only an explicit document allowlist rather
+does not call a model or require an API key. The backend exposes only an explicit document allowlist rather
 than accepting arbitrary local paths.
 
 The **Decision Tools** workspace turns the latest evidence and portfolio workflow into one non-technical
@@ -28,17 +32,17 @@ screen. It shows SEC, transcript, news, and price freshness; provides an explici
 transcript/news import; creates and reviews exceptional-business/price-concern watches; shows triggered,
 due, and overdue reviews; and compares two to eight companies using saved dossiers, CIO scenarios, current
 portfolio weights, and overlapping economic exposures. These reads and deterministic comparisons do not
-start Codex. Only the existing explicit research and council controls invoke a model.
+start a model. Only Ask and the explicit research, follow-up, and council controls invoke a model.
 
 Saved dossier history is available per ticker. Select a completed version, write a focused question, and
 choose **Ask follow-up** to reuse that report's validated context. A follow-up is smaller than a full
-council dossier, but it still invokes Codex and consumes some of the signed-in account's allowance.
+council dossier, but it still invokes the selected runner and consumes some of that account's allowance.
 Active follow-ups can also be cancelled.
 
 The separate **Independent council** control is the higher-cost independence mode. It freezes one context,
 runs Evidence, Valuation, Bear, Buffett, Munger, Fisher, Asymmetric Growth, Technical/Momentum, and
-Macro/Industry in separate Codex processes, then lets a separate CIO synthesize only the validated outputs.
-The confirmation states that this uses up to ten Codex calls. Progress and cancellation remain visible;
+Macro/Industry in separate local-runner processes, then lets a separate CIO synthesize only the validated
+outputs. The confirmation states the exact call count before anything starts. Progress and cancellation remain visible;
 completed agent cards expand to detailed claims, risks, invalidation conditions, open questions, and sources.
 The combined council is saved locally as JSON and Markdown.
 
@@ -55,7 +59,7 @@ tax-lot details do not enter the application. The snapshot remains in local Post
 After import, enter a candidate weight, sleeve, sector, overlapping themes/economic drivers, and explicit
 bear/base/bull probabilities and value multiples. The workspace calculates cash before/after, the strictest
 policy ceiling, exposure blockers, scenario contribution, and permanent-loss impact using deterministic
-backend code. It does not invoke Codex, use an LLM API key, or place a trade.
+backend code. It does not invoke a model, use an LLM API key, or place a trade.
 
 Choose **Load CIO** to read the latest completed council without starting another model run. New CIO v2
 reports supply scenario probabilities, numeric value multiples, narrative assumptions, conditions to act,
@@ -97,13 +101,14 @@ The backend defaults to
 For normal use, the sibling backend repository provides `make stack`, which starts PostgreSQL, applies
 migrations, and runs both services. Use `make check-stack` there for a model-free health check.
 
-Quick signals and saved research reads do not use Codex. Each explicit **Request Codex** action consumes
-some of the allowance attached to the signed-in Codex account.
+Signals and saved research reads do not use a model. Each explicit Ask, follow-up, dossier, or council run
+consumes some allowance from the selected locally signed-in Codex or Claude Code account.
 
 ## Verify changes
 
 ```bash
 npm run lint
+npm test
 npm run build
 ```
 
