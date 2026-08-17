@@ -426,7 +426,8 @@ export default function PriceHistoryWorkspace() {
   }, []);
 
   useEffect(() => {
-    void loadHistory("NVDA", "10y");
+    const timer = window.setTimeout(() => void loadHistory("NVDA", "10y"), 0);
+    return () => window.clearTimeout(timer);
   }, [loadHistory]);
 
   function submitTicker(event: FormEvent) {
