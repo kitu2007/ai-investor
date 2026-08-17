@@ -89,6 +89,17 @@ export function visibleFinancialMetrics(
   return metrics.filter((metric) => visible.has(metric.key));
 }
 
+export function toggleFinancialChartMetric(
+  currentKeys: string[],
+  currentKind: AnnualFinancialMetric["value_kind"] | null,
+  metric: Pick<AnnualFinancialMetric, "key" | "value_kind">,
+  limit = 5,
+): string[] {
+  if (currentKeys.includes(metric.key)) return currentKeys.filter((key) => key !== metric.key);
+  if (currentKind && currentKind !== metric.value_kind) return [metric.key];
+  return currentKeys.length < limit ? [...currentKeys, metric.key] : currentKeys;
+}
+
 export function metricCagr(
   metric: AnnualFinancialMetric | null,
   fiscalYears: Map<string, number>,

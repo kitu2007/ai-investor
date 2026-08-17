@@ -24,11 +24,17 @@ import {
   metricCagr,
   metricValue,
   metricYearOverYear,
+  toggleFinancialChartMetric,
   visibleFinancialMetrics,
   type FinancialDisplayMode,
   type FinancialMetricView,
   type YearOverYearResult,
 } from "@/lib/financial-statements";
+import {
+  annualEstimateForMetric,
+  type ForwardEstimatePeriod,
+  type ForwardEstimatesResponse,
+} from "@/lib/forward-estimates";
 import type {
   AnnualFinancialMetric,
   AnnualFinancialStatement,
@@ -54,25 +60,73 @@ async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {
   return body;
 }
 
+async function optionalForwardEstimates(ticker: string): Promise<{
+  data: ForwardEstimatesResponse | null;
+  error: string;
+}> {
+  try {
+    const data = await jsonRequest<ForwardEstimatesResponse>(
+      `/api/investment-os/forward-estimates?ticker=${encodeURIComponent(ticker)}`,
+    );
+    return { data, error: "" };
+  } catch (reason) {
+    return {
+      data: null,
+      error: reason instanceof Error ? reason.message : "Consensus estimates are unavailable.",
+    };
+  }
+}
+
 function TrendChart({
   dashboard,
   metricKeys,
+  estimates,
 }: {
   dashboard: FinancialStatementDashboard;
   metricKeys: string[];
+  estimates: ForwardEstimatesResponse | null;
 }) {
   const periods = [...dashboard.periods].reverse();
   const series = metricKeys.flatMap((key, index) => {
     const metric = dashboardMetric(dashboard, key);
     return metric
-      ? [{ key, label: metric.label, color: TREND_COLORS[index % TREND_COLORS.length], metric }]
+      ? [
+          {
+            key,
+            label: metric.label,
+            color: TREND_COLORS[index % TREND_COLORS.length],
+            metric,
+            forecasts: annualEstimateForMetric(estimates, key),
+          },
+        ]
       : [];
   });
-  const values = series.flatMap(({ metric }) => metric?.values.map((item) => item.value) ?? []);
+  const forecastPeriods = estimates?.periods.filter(
+    (period) =>
+      period.endDate &&
+      ["current_year", "next_year"].includes(period.key) &&
+      series.some((item) => item.forecasts.some((forecast) => forecast.period.key === period.key)),
+  ) ?? [];
+  const columns = [
+    ...periods.map((period) => ({
+      key: period.period_end,
+      label: String(period.fiscal_year),
+      estimate: false,
+    })),
+    ...forecastPeriods.map((period) => ({
+      key: period.endDate ?? period.key,
+      label: `FY ${period.endDate?.slice(0, 4) ?? "?"}E`,
+      estimate: true,
+    })),
+  ];
+  const values = series.flatMap(({ metric, forecasts }) => [
+    ...metric.values.map((item) => item.value),
+    ...forecasts.flatMap((forecast) => [forecast.average, forecast.low, forecast.high]),
+  ]).filter((value): value is number => value != null && Number.isFinite(value));
   if (metricKeys.length === 0) {
     return (
       <div className="grid h-56 place-items-center text-xs text-gray-600">
-        Choose up to five chart metrics in Customize.
+        Click a financial-statement row to add it to this chart.
       </div>
     );
   }
@@ -90,13 +144,22 @@ function TrendChart({
   const right = 24;
   const top = 24;
   const bottom = 42;
+  const valueKind = series[0]?.metric.value_kind ?? "currency";
   const minimum = Math.min(0, ...values);
   const maximum = Math.max(0, ...values);
   const range = maximum - minimum || 1;
   const x = (index: number) =>
-    left + (index * (width - left - right)) / Math.max(periods.length - 1, 1);
+    left + (index * (width - left - right)) / Math.max(columns.length - 1, 1);
   const y = (value: number) => top + ((maximum - value) * (height - top - bottom)) / range;
   const zeroY = y(0);
+  const formatChartValue = (value: number) => {
+    if (valueKind === "per_share") {
+      return `$${formatFinancialValue(value, valueKind, "billions")}`;
+    }
+    const suffix = "B";
+    return `${valueKind === "currency" ? "$" : ""}${formatFinancialValue(value, valueKind, "billions")}${suffix}`;
+  };
+  const firstForecastIndex = columns.findIndex((column) => column.estimate);
 
   return (
     <div>
@@ -107,6 +170,11 @@ function TrendChart({
             {item.label}
           </span>
         ))}
+        {firstForecastIndex >= 0 ? (
+          <span className="inline-flex items-center gap-1.5 text-blue-300/80">
+            <span className="w-4 border-t border-dashed border-blue-300" /> Analyst consensus
+          </span>
+        ) : null}
       </div>
       <svg
         viewBox={`0 0 ${width} ${height}`}
@@ -139,17 +207,48 @@ function TrendChart({
           />
         ) : null}
         <text x="4" y={top + 4} fill="#6b7280" fontSize="10">
-          {formatFinancialValue(maximum, "currency", "billions")}B
+          {formatChartValue(maximum)}
         </text>
         <text x="4" y={height - bottom + 4} fill="#6b7280" fontSize="10">
-          {formatFinancialValue(minimum, "currency", "billions")}B
+          {formatChartValue(minimum)}
         </text>
-        {series.map(({ key, metric, color }) => {
+        {firstForecastIndex >= 0 ? (
+          <g>
+            <line
+              x1={(x(firstForecastIndex - 1) + x(firstForecastIndex)) / 2}
+              x2={(x(firstForecastIndex - 1) + x(firstForecastIndex)) / 2}
+              y1={top}
+              y2={height - bottom}
+              stroke="#475569"
+              strokeDasharray="3 5"
+            />
+            <text
+              x={(x(firstForecastIndex - 1) + x(firstForecastIndex)) / 2 + 5}
+              y={top + 10}
+              fill="#64748b"
+              fontSize="9"
+            >
+              CONSENSUS
+            </text>
+          </g>
+        ) : null}
+        {series.map(({ key, metric, color, forecasts }) => {
           const points = periods.flatMap((period, index) => {
             const value = metricValue(metric, period.period_end);
             return value ? [{ x: x(index), y: y(value.value), value }] : [];
           });
           const path = points
+            .map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`)
+            .join(" ");
+          const forecastPoints = forecasts.flatMap((forecast) => {
+            const index = columns.findIndex((column) => column.key === forecast.period.endDate);
+            return index < 0 ? [] : [{ ...forecast, x: x(index), y: y(forecast.average) }];
+          });
+          const forecastPathPoints = [
+            ...(points.length ? [points[points.length - 1]] : []),
+            ...forecastPoints,
+          ];
+          const forecastPath = forecastPathPoints
             .map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`)
             .join(" ");
           return (
@@ -165,27 +264,65 @@ function TrendChart({
                   r="3.5"
                   fill={color}
                 >
-                  <title>
-                    {formatFinancialValue(point.value.value, "currency", "billions")} billion
-                  </title>
+                  <title>{formatChartValue(point.value.value)}</title>
                 </circle>
+              ))}
+              {forecastPathPoints.length > 1 ? (
+                <path
+                  d={forecastPath}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth="2.5"
+                  strokeDasharray="7 5"
+                />
+              ) : null}
+              {forecastPoints.map((point) => (
+                <g key={point.period.key}>
+                  {point.low != null && point.high != null ? (
+                    <line
+                      x1={point.x}
+                      x2={point.x}
+                      y1={y(point.high)}
+                      y2={y(point.low)}
+                      stroke={color}
+                      strokeWidth="5"
+                      strokeOpacity="0.2"
+                    />
+                  ) : null}
+                  <circle cx={point.x} cy={point.y} r="4" fill="#030712" stroke={color} strokeWidth="2">
+                    <title>
+                      {point.period.label}: {formatChartValue(point.average)} consensus
+                      {point.low != null && point.high != null
+                        ? `; range ${formatChartValue(point.low)}–${formatChartValue(point.high)}`
+                        : ""}
+                    </title>
+                  </circle>
+                </g>
               ))}
             </g>
           );
         })}
-        {periods.map((period, index) => (
+        {columns.map((column, index) => (
           <text
-            key={period.period_end}
+            key={column.key}
             x={x(index)}
             y={height - 14}
             textAnchor="middle"
-            fill="#6b7280"
+            fill={column.estimate ? "#93c5fd" : "#6b7280"}
             fontSize="10"
           >
-            {period.fiscal_year}
+            {column.label}
           </text>
         ))}
       </svg>
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[9px] text-gray-600">
+        <span>
+          Solid lines are SEC annual actuals. Dashed lines and ranges are analyst averages and low/high estimates.
+        </span>
+        {series.some((item) => item.forecasts.length === 0) ? (
+          <span>Free consensus chart extensions are currently available for Revenue and Diluted EPS.</span>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -223,18 +360,141 @@ function SummaryCard({
   );
 }
 
+function forwardValue(value: number | null, kind: "revenue" | "eps"): string {
+  if (value == null) return "—";
+  return kind === "revenue"
+    ? `$${formatFinancialValue(value, "currency", "billions")}B`
+    : `$${value.toFixed(2)}`;
+}
+
+function forwardGrowth(value: number | null): string {
+  if (value == null) return "growth unavailable";
+  return `${forwardPercent(value)} YoY`;
+}
+
+function forwardPercent(value: number): string {
+  return `${value > 0 ? "+" : ""}${(value * 100).toFixed(1)}%`;
+}
+
+function ConsensusCard({ period }: { period: ForwardEstimatePeriod }) {
+  const revisionChange =
+    period.epsCurrent != null && period.eps30DaysAgo != null
+      ? period.epsCurrent / period.eps30DaysAgo - 1
+      : null;
+  return (
+    <article className="rounded-xl border border-blue-400/15 bg-blue-400/[0.035] p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h3 className="text-xs font-semibold text-blue-100">{period.label}</h3>
+          <p className="mt-0.5 text-[9px] text-gray-600">Ending {period.endDate || "date unavailable"}</p>
+        </div>
+        <span className="rounded-full border border-blue-400/20 px-2 py-0.5 text-[8px] font-semibold uppercase text-blue-300">
+          Estimate
+        </span>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <div>
+          <div className="text-[9px] font-semibold uppercase tracking-wide text-gray-600">Revenue</div>
+          <div className="mt-1 text-sm font-semibold tabular-nums text-white">
+            {forwardValue(period.revenue.average, "revenue")}
+          </div>
+          <div className="mt-0.5 text-[9px] text-emerald-400/80">
+            {forwardGrowth(period.revenue.growth)}
+          </div>
+          <div className="mt-1 text-[9px] text-gray-600">
+            Range {forwardValue(period.revenue.low, "revenue")}–{forwardValue(period.revenue.high, "revenue")}
+            {period.revenue.analystCount == null ? "" : ` · ${period.revenue.analystCount} analysts`}
+          </div>
+        </div>
+        <div>
+          <div className="text-[9px] font-semibold uppercase tracking-wide text-gray-600">Diluted EPS</div>
+          <div className="mt-1 text-sm font-semibold tabular-nums text-white">
+            {forwardValue(period.eps.average, "eps")}
+          </div>
+          <div className="mt-0.5 text-[9px] text-emerald-400/80">{forwardGrowth(period.eps.growth)}</div>
+          <div className="mt-1 text-[9px] text-gray-600">
+            Range {forwardValue(period.eps.low, "eps")}–{forwardValue(period.eps.high, "eps")}
+            {period.eps.analystCount == null ? "" : ` · ${period.eps.analystCount} analysts`}
+          </div>
+        </div>
+      </div>
+      {revisionChange != null || period.upwardRevisions30Days != null ? (
+        <div className="mt-3 border-t border-gray-800 pt-2 text-[9px] text-gray-500">
+          EPS consensus 30-day change {revisionChange == null ? "—" : forwardPercent(revisionChange)}
+          {period.upwardRevisions30Days == null
+            ? ""
+            : ` · ${period.upwardRevisions30Days} up / ${period.downwardRevisions30Days ?? 0} down revisions`}
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function ForwardConsensusPanel({
+  estimates,
+  error,
+}: {
+  estimates: ForwardEstimatesResponse | null;
+  error: string;
+}) {
+  if (!estimates) {
+    return (
+      <section className="rounded-xl border border-amber-400/15 bg-amber-400/[0.035] p-4 text-xs text-amber-200/80">
+        <div className="flex items-start gap-2">
+          <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+          <span>{error || "No structured analyst consensus is available for this ticker."}</span>
+        </div>
+      </section>
+    );
+  }
+  return (
+    <section>
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-blue-300">
+            Forward outlook · {estimates.methodology}
+          </div>
+          <p className="mt-1 text-[10px] leading-4 text-gray-500">
+            Analyst consensus is not company guidance. Ranges expose disagreement; revisions show how expectations are moving.
+          </p>
+        </div>
+        <a
+          href={estimates.sourceUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 rounded-full border border-blue-400/20 px-2.5 py-1 text-[9px] font-semibold text-blue-300 hover:text-blue-200"
+        >
+          {estimates.source} <ExternalLink size={9} />
+        </a>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {estimates.periods.map((period) => (
+          <ConsensusCard key={period.key} period={period} />
+        ))}
+      </div>
+      <p className="mt-2 text-[9px] text-gray-600">
+        Company-issued guidance is not yet normalized in this feed. No unsupported line item is projected or filled by an LLM.
+      </p>
+    </section>
+  );
+}
+
 function StatementTable({
   dashboard,
   statement,
   metrics,
   scale,
   displayMode,
+  chartMetricKeys,
+  onToggleChartMetric,
 }: {
   dashboard: FinancialStatementDashboard;
   statement: AnnualFinancialStatement;
   metrics: AnnualFinancialMetric[];
   scale: Scale;
   displayMode: FinancialDisplayMode;
+  chartMetricKeys: string[];
+  onToggleChartMetric: (metric: AnnualFinancialMetric) => void;
 }) {
   function growthTone(result: YearOverYearResult): string {
     if (result.status === "not_meaningful") return "text-amber-300/80";
@@ -264,20 +524,42 @@ function StatementTable({
           </tr>
         </thead>
         <tbody>
-          {metrics.map((metric) => (
-            <tr
-              key={metric.key}
-              className={metric.emphasis ? "bg-blue-400/[0.035]" : "hover:bg-gray-900/55"}
-            >
+          {metrics.map((metric) => {
+            const chartSelected = chartMetricKeys.includes(metric.key);
+            return (
+              <tr
+                key={metric.key}
+                className={
+                  chartSelected
+                    ? "bg-blue-500/[0.08]"
+                    : metric.emphasis
+                      ? "bg-blue-400/[0.035]"
+                      : "hover:bg-gray-900/55"
+                }
+              >
               <th
                 className={
                   "sticky left-0 z-[5] border-r border-t border-gray-800 px-4 py-3 text-left " +
-                  (metric.emphasis
+                  (chartSelected
+                    ? "bg-[#0b1930] font-semibold text-blue-100"
+                    : metric.emphasis
                     ? "bg-[#09111f] font-semibold text-gray-100"
                     : "bg-gray-950 font-medium text-gray-400")
                 }
               >
-                <span>{metric.label}</span>
+                <button
+                  type="button"
+                  aria-pressed={chartSelected}
+                  onClick={() => onToggleChartMetric(metric)}
+                  className="group inline-flex items-center gap-1.5 text-left hover:text-blue-300"
+                  title={chartSelected ? "Remove this row from the chart" : "Add this row to the chart"}
+                >
+                  <BarChart3
+                    size={11}
+                    className={chartSelected ? "text-blue-300" : "text-gray-700 group-hover:text-blue-400"}
+                  />
+                  <span>{metric.label}</span>
+                </button>
                 {metric.key === "free_cash_flow" ? (
                   <span className="ml-2 rounded bg-emerald-400/10 px-1.5 py-0.5 text-[8px] font-semibold uppercase text-emerald-300">
                     calculated
@@ -337,7 +619,8 @@ function StatementTable({
                 );
               })}
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -399,6 +682,8 @@ export default function FinancialStatementsWorkspace() {
   const [metricSearch, setMetricSearch] = useState("");
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [dashboard, setDashboard] = useState<FinancialStatementDashboard | null>(null);
+  const [forwardEstimates, setForwardEstimates] = useState<ForwardEstimatesResponse | null>(null);
+  const [forwardError, setForwardError] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -438,14 +723,20 @@ export default function FinancialStatementsWorkspace() {
     setError("");
     setMessage("");
     try {
-      const result = await jsonRequest<FinancialStatementDashboard>(
-        `/api/investment-os/financial-statements?ticker=${encodeURIComponent(normalized)}` +
-          `&years=${requestedYears}`,
-      );
+      const [result, forward] = await Promise.all([
+        jsonRequest<FinancialStatementDashboard>(
+          `/api/investment-os/financial-statements?ticker=${encodeURIComponent(normalized)}` +
+            `&years=${requestedYears}`,
+        ),
+        optionalForwardEstimates(normalized),
+      ]);
       setDashboard(result);
+      setForwardEstimates(forward.data);
+      setForwardError(forward.error);
       setTicker(result.ticker);
     } catch (reason) {
       setDashboard(null);
+      setForwardEstimates(null);
       setError(
         reason instanceof Error
           ? reason.message
@@ -458,12 +749,17 @@ export default function FinancialStatementsWorkspace() {
 
   useEffect(() => {
     let active = true;
-    void jsonRequest<FinancialStatementDashboard>(
-      "/api/investment-os/financial-statements?ticker=NVDA&years=10",
-    )
-      .then((result) => {
+    void Promise.all([
+      jsonRequest<FinancialStatementDashboard>(
+        "/api/investment-os/financial-statements?ticker=NVDA&years=10",
+      ),
+      optionalForwardEstimates("NVDA"),
+    ])
+      .then(([result, forward]) => {
         if (!active) return;
         setDashboard(result);
+        setForwardEstimates(forward.data);
+        setForwardError(forward.error);
         setTicker(result.ticker);
       })
       .catch((reason) => {
@@ -504,9 +800,15 @@ export default function FinancialStatementsWorkspace() {
   const trendCandidates = useMemo(
     () =>
       dashboard?.statements
-        .flatMap((statement) => statement.metrics)
-        .filter((metric) => metric.value_kind === "currency") ?? [],
+        .flatMap((statement) => statement.metrics) ?? [],
     [dashboard],
+  );
+  const selectedTrendKind = useMemo(
+    () =>
+      trendMetricKeys
+        .map((key) => dashboardMetric(dashboard, key))
+        .find((metric) => metric)?.value_kind ?? null,
+    [dashboard, trendMetricKeys],
   );
 
   function submitTicker(event: FormEvent) {
@@ -521,15 +823,20 @@ export default function FinancialStatementsWorkspace() {
     setError("");
     setMessage("");
     try {
-      const result = await jsonRequest<FinancialStatementDashboard>(
-        "/api/investment-os/financial-statements",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ticker: normalized, years }),
-        },
-      );
+      const [result, forward] = await Promise.all([
+        jsonRequest<FinancialStatementDashboard>(
+          "/api/investment-os/financial-statements",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ticker: normalized, years }),
+          },
+        ),
+        optionalForwardEstimates(normalized),
+      ]);
       setDashboard(result);
+      setForwardEstimates(forward.data);
+      setForwardError(forward.error);
       setTicker(result.ticker);
       setMessage("SEC filings and annual financial statements were refreshed.");
     } catch (reason) {
@@ -554,10 +861,12 @@ export default function FinancialStatementsWorkspace() {
     setMetricView("custom");
   }
 
-  function toggleTrendMetric(key: string) {
+  function toggleTrendMetric(metric: AnnualFinancialMetric) {
     setTrendMetricKeys((current) => {
-      if (current.includes(key)) return current.filter((item) => item !== key);
-      return current.length < 5 ? [...current, key] : current;
+      const currentKind = current
+        .map((key) => dashboardMetric(dashboard, key))
+        .find((item) => item)?.value_kind;
+      return toggleFinancialChartMetric(current, currentKind ?? null, metric);
     });
   }
 
@@ -702,11 +1011,21 @@ export default function FinancialStatementsWorkspace() {
               <SummaryCard dashboard={dashboard} metricKey="total_assets" label="Latest total assets" />
             </section>
 
+            <ForwardConsensusPanel estimates={forwardEstimates} error={forwardError} />
+
             <section className="rounded-xl border border-gray-800 bg-gray-900/35 p-4">
               <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
-                <BarChart3 size={12} /> Selected annual trends · USD billions
+                <BarChart3 size={12} /> Selected annual actuals and estimates · {selectedTrendKind === "per_share"
+                  ? "USD per share"
+                  : selectedTrendKind === "shares"
+                    ? "billions of shares"
+                    : "USD billions"}
               </div>
-              <TrendChart dashboard={dashboard} metricKeys={trendMetricKeys} />
+              <TrendChart
+                dashboard={dashboard}
+                metricKeys={trendMetricKeys}
+                estimates={forwardEstimates}
+              />
             </section>
 
             {dashboard.warnings.length ? (
@@ -742,7 +1061,7 @@ export default function FinancialStatementsWorkspace() {
                   ))}
                 </div>
                 <p className="text-[10px] text-gray-600">
-                  USD in {scale}; per-share values and share counts are labelled by row
+                  Click any row name to add or remove it from the chart · USD in {scale}
                 </p>
               </div>
 
@@ -882,7 +1201,7 @@ export default function FinancialStatementsWorkspace() {
                       <div>
                         <h3 className="text-xs font-semibold text-gray-100">Trend chart metrics</h3>
                         <p className="mt-1 text-[10px] text-gray-500">
-                          Choose up to five currency metrics; units that cannot be compared are excluded.
+                          Choose up to five rows with the same unit. Selecting a different unit starts a new chart.
                         </p>
                       </div>
                       <span className="text-[9px] font-semibold uppercase text-gray-600">
@@ -892,7 +1211,10 @@ export default function FinancialStatementsWorkspace() {
                     <div className="mt-3 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                       {trendCandidates.map((metric) => {
                         const selected = trendMetricKeys.includes(metric.key);
-                        const disabled = !selected && trendMetricKeys.length >= 5;
+                        const disabled =
+                          !selected &&
+                          trendMetricKeys.length >= 5 &&
+                          metric.value_kind === selectedTrendKind;
                         return (
                           <label
                             key={metric.key}
@@ -907,7 +1229,7 @@ export default function FinancialStatementsWorkspace() {
                               type="checkbox"
                               checked={selected}
                               disabled={disabled}
-                              onChange={() => toggleTrendMetric(metric.key)}
+                              onChange={() => toggleTrendMetric(metric)}
                               className="accent-blue-500"
                             />
                             <span>{metric.label}</span>
@@ -926,6 +1248,8 @@ export default function FinancialStatementsWorkspace() {
                   metrics={visibleMetrics}
                   scale={scale}
                   displayMode={displayMode}
+                  chartMetricKeys={trendMetricKeys}
+                  onToggleChartMetric={toggleTrendMetric}
                 />
               ) : selectedStatement ? (
                 <div className="grid min-h-40 place-items-center rounded-xl border border-dashed border-gray-800 text-xs text-gray-600">

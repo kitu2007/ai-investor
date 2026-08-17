@@ -7,6 +7,7 @@ import {
   metricCagr,
   metricValue,
   metricYearOverYear,
+  toggleFinancialChartMetric,
   visibleFinancialMetrics,
 } from "./financial-statements";
 
@@ -107,5 +108,26 @@ describe("financial statement helpers", () => {
     expect(visibleFinancialMetrics(metrics, "custom", ["interest_expense"]).map((item) => item.key)).toEqual([
       "interest_expense",
     ]);
+  });
+
+  it("toggles chart rows while keeping a comparable unit", () => {
+    expect(
+      toggleFinancialChartMetric(["revenue", "net_income"], "currency", {
+        key: "operating_income",
+        value_kind: "currency",
+      }),
+    ).toEqual(["revenue", "net_income", "operating_income"]);
+    expect(
+      toggleFinancialChartMetric(["revenue", "net_income"], "currency", {
+        key: "diluted_eps",
+        value_kind: "per_share",
+      }),
+    ).toEqual(["diluted_eps"]);
+    expect(
+      toggleFinancialChartMetric(["revenue", "net_income"], "currency", {
+        key: "revenue",
+        value_kind: "currency",
+      }),
+    ).toEqual(["net_income"]);
   });
 });
