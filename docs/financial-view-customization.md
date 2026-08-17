@@ -47,14 +47,21 @@ comparison period.
 
 ## Trend selection
 
-Customize permits up to five trend series. Only currency metrics are offered so per-share and share-count
-units are not plotted on the same axis as dollars. The chart always shows original annual values in USD
-billions; the table's Values/YoY mode does not convert the chart into a percentage chart.
+Clicking any statement row name adds or removes that row from the chart. Selected rows are highlighted.
+Customize offers the same controls and permits up to five trend series. One chart contains one unit: if a
+per-share or share-count row is clicked while currency rows are selected, that row starts a new chart. This
+prevents incomparable axes. The table's Values/YoY mode does not convert the chart into a percentage chart.
+
+Revenue and Diluted EPS can extend beyond the actual SEC years using available annual analyst consensus.
+Actual lines are solid. Consensus averages are dashed, estimate years end in `E`, and low/high ranges appear
+at the forecast points. Other rows remain historical rather than being mechanically extrapolated.
 
 ## Implementation map
 
 - `components/FinancialStatementsWorkspace.tsx`: row/display controls, local preference persistence,
-  custom metric panel, table rendering, and trend selection.
+  custom metric panel, row-driven chart selection, forecast rendering, and consensus cards.
+- `app/api/investment-os/forward-estimates/route.ts`: validated server-side consensus endpoint.
+- `lib/forward-estimates.ts`: pure normalization and annual chart-point selection.
 - `lib/financial-statements.ts`: Core/default definitions and pure visibility, YoY, CAGR, lookup, and
   formatting calculations.
 - `lib/financial-statements.test.ts`: deterministic view and YoY edge-case tests.

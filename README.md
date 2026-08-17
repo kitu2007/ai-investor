@@ -28,7 +28,10 @@ leaves unavailable facts blank rather than estimating them. **Refresh SEC data**
 data fetch; simply opening the dashboard is a local, model-free read. Core, All, and Custom row views let
 the user hide unwanted line items without deleting data. Values can be shown alone, alongside bracketed
 year-over-year changes, or as YoY changes only. Visible rows and up to five selected trend metrics are saved
-locally in the browser.
+locally in the browser. Clicking a statement row adds or removes it from the x/y trend chart; rows with a
+different unit start a new chart so dollars, shares, and per-share values are not mixed. The same workspace
+loads current-quarter, next-quarter, current-year, and next-year analyst revenue/EPS consensus. Annual
+Revenue and Diluted EPS series extend into dashed estimate lines with visible low/high ranges.
 
 The **Price History** board shows adjusted closing prices for any ticker over All, 10-year, 5-year,
 2-year, 1-year, 6-month, and 3-month windows. The price chart switches between normal and logarithmic
