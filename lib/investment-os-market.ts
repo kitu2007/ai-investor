@@ -14,6 +14,18 @@ export interface PriceHistoryOptions {
   interval?: "1d" | "1wk";
 }
 
+export async function earningsTrend(ticker: string): Promise<{
+  trend: unknown[];
+  defaultMethodology?: string | null;
+}> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const summary: any = await yf.quoteSummary(ticker, { modules: ["earningsTrend"] });
+  return {
+    trend: summary?.earningsTrend?.trend ?? [],
+    defaultMethodology: summary?.earningsTrend?.defaultMethodology ?? null,
+  };
+}
+
 function startDate(): Date {
   const date = new Date();
   date.setMonth(date.getMonth() - 18);
