@@ -25,7 +25,10 @@ The top navigation's **Financials** dashboard shows five, ten, fifteen, or twent
 annual income statements, balance sheets, cash-flow statements, and calculated free cash flow. It uses
 stored official SEC XBRL facts, links every available value to its filing, preserves restatements, and
 leaves unavailable facts blank rather than estimating them. **Refresh SEC data** is an explicit public
-data fetch; simply opening the dashboard is a local, model-free read.
+data fetch; simply opening the dashboard is a local, model-free read. Core, All, and Custom row views let
+the user hide unwanted line items without deleting data. Values can be shown alone, alongside bracketed
+year-over-year changes, or as YoY changes only. Visible rows and up to five selected trend metrics are saved
+locally in the browser.
 
 The **Price History** board shows adjusted closing prices for any ticker over All, 10-year, 5-year,
 2-year, 1-year, 6-month, and 3-month windows. The price chart switches between normal and logarithmic
