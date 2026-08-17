@@ -4,6 +4,40 @@ import type {
   FinancialStatementDashboard,
 } from "./investment-os-types";
 
+export type FinancialMetricView = "core" | "all" | "custom";
+export type FinancialDisplayMode = "values" | "both" | "yoy";
+
+export const CORE_FINANCIAL_METRIC_KEYS = [
+  "revenue",
+  "gross_profit",
+  "operating_income",
+  "net_income",
+  "diluted_eps",
+  "cash",
+  "short_term_investments",
+  "total_assets",
+  "long_term_debt",
+  "total_liabilities",
+  "shareholders_equity",
+  "operating_cash_flow",
+  "capital_expenditures",
+  "free_cash_flow",
+  "stock_based_compensation",
+  "share_repurchases",
+] as const;
+
+export const DEFAULT_TREND_METRIC_KEYS = [
+  "revenue",
+  "operating_income",
+  "net_income",
+  "free_cash_flow",
+] as const;
+
+export interface YearOverYearResult {
+  status: "available" | "missing" | "not_meaningful";
+  value: number | null;
+}
+
 export function dashboardMetric(
   dashboard: FinancialStatementDashboard | null,
   key: string,
@@ -21,6 +55,38 @@ export function metricValue(
   periodEnd: string,
 ): AnnualFinancialValue | null {
   return metric?.values.find((value) => value.period_end === periodEnd) ?? null;
+}
+
+export function metricYearOverYear(
+  metric: AnnualFinancialMetric | null,
+  currentPeriodEnd: string,
+  previousPeriodEnd: string | null,
+): YearOverYearResult {
+  if (!metric || !previousPeriodEnd) return { status: "missing", value: null };
+  const current = metricValue(metric, currentPeriodEnd);
+  const previous = metricValue(metric, previousPeriodEnd);
+  if (!current || !previous) return { status: "missing", value: null };
+  if (previous.value <= 0) return { status: "not_meaningful", value: null };
+  return { status: "available", value: current.value / previous.value - 1 };
+}
+
+export function formatYearOverYear(result: YearOverYearResult, bracketed = true): string {
+  if (result.status === "missing") return "—";
+  if (result.status === "not_meaningful") return bracketed ? "(YoY N/M)" : "N/M";
+  const value = result.value ?? 0;
+  const sign = value > 0 ? "+" : "";
+  const formatted = `${sign}${(value * 100).toFixed(1)}%`;
+  return bracketed ? `(YoY ${formatted})` : formatted;
+}
+
+export function visibleFinancialMetrics(
+  metrics: AnnualFinancialMetric[],
+  view: FinancialMetricView,
+  customMetricKeys: Iterable<string>,
+): AnnualFinancialMetric[] {
+  if (view === "all") return metrics;
+  const visible = new Set(view === "core" ? CORE_FINANCIAL_METRIC_KEYS : customMetricKeys);
+  return metrics.filter((metric) => visible.has(metric.key));
 }
 
 export function metricCagr(

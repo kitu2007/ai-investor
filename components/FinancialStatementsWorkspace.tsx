@@ -9,16 +9,28 @@ import {
   FileSpreadsheet,
   LoaderCircle,
   RefreshCw,
+  RotateCcw,
+  Search,
+  Settings2,
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import {
+  CORE_FINANCIAL_METRIC_KEYS,
+  DEFAULT_TREND_METRIC_KEYS,
   dashboardMetric,
   formatFinancialValue,
+  formatYearOverYear,
   metricCagr,
   metricValue,
+  metricYearOverYear,
+  visibleFinancialMetrics,
+  type FinancialDisplayMode,
+  type FinancialMetricView,
+  type YearOverYearResult,
 } from "@/lib/financial-statements";
 import type {
+  AnnualFinancialMetric,
   AnnualFinancialStatement,
   FinancialStatementDashboard,
 } from "@/lib/investment-os-types";
@@ -26,10 +38,13 @@ import type {
 type StatementKey = AnnualFinancialStatement["key"];
 type Scale = "millions" | "billions";
 
-const TREND_METRICS = [
-  { key: "revenue", label: "Revenue", color: "#60a5fa" },
-  { key: "net_income", label: "Net income", color: "#a78bfa" },
-  { key: "free_cash_flow", label: "Free cash flow", color: "#34d399" },
+const FINANCIAL_PREFERENCES_KEY = "investment-os:financials:preferences:v1";
+const TREND_COLORS = [
+  "#60a5fa",
+  "#a78bfa",
+  "#34d399",
+  "#fbbf24",
+  "#fb7185",
 ];
 
 async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {
@@ -39,13 +54,28 @@ async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {
   return body;
 }
 
-function TrendChart({ dashboard }: { dashboard: FinancialStatementDashboard }) {
+function TrendChart({
+  dashboard,
+  metricKeys,
+}: {
+  dashboard: FinancialStatementDashboard;
+  metricKeys: string[];
+}) {
   const periods = [...dashboard.periods].reverse();
-  const series = TREND_METRICS.map((definition) => ({
-    ...definition,
-    metric: dashboardMetric(dashboard, definition.key),
-  }));
+  const series = metricKeys.flatMap((key, index) => {
+    const metric = dashboardMetric(dashboard, key);
+    return metric
+      ? [{ key, label: metric.label, color: TREND_COLORS[index % TREND_COLORS.length], metric }]
+      : [];
+  });
   const values = series.flatMap(({ metric }) => metric?.values.map((item) => item.value) ?? []);
+  if (metricKeys.length === 0) {
+    return (
+      <div className="grid h-56 place-items-center text-xs text-gray-600">
+        Choose up to five chart metrics in Customize.
+      </div>
+    );
+  }
   if (periods.length < 2 || values.length === 0) {
     return (
       <div className="grid h-56 place-items-center text-xs text-gray-600">
@@ -82,7 +112,7 @@ function TrendChart({ dashboard }: { dashboard: FinancialStatementDashboard }) {
         viewBox={`0 0 ${width} ${height}`}
         className="h-64 w-full overflow-visible"
         role="img"
-        aria-label="Revenue, net income, and free cash flow annual trend"
+        aria-label={`${series.map((item) => item.label).join(", ")} annual trend`}
       >
         {[0, 0.25, 0.5, 0.75, 1].map((fraction) => {
           const gridY = top + fraction * (height - top - bottom);
@@ -196,12 +226,22 @@ function SummaryCard({
 function StatementTable({
   dashboard,
   statement,
+  metrics,
   scale,
+  displayMode,
 }: {
   dashboard: FinancialStatementDashboard;
   statement: AnnualFinancialStatement;
+  metrics: AnnualFinancialMetric[];
   scale: Scale;
+  displayMode: FinancialDisplayMode;
 }) {
+  function growthTone(result: YearOverYearResult): string {
+    if (result.status === "not_meaningful") return "text-amber-300/80";
+    if (result.status !== "available" || result.value === 0) return "text-gray-600";
+    return (result.value ?? 0) > 0 ? "text-emerald-400" : "text-rose-400";
+  }
+
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-800">
       <table className="w-full min-w-[1050px] border-collapse text-xs">
@@ -224,7 +264,7 @@ function StatementTable({
           </tr>
         </thead>
         <tbody>
-          {statement.metrics.map((metric) => (
+          {metrics.map((metric) => (
             <tr
               key={metric.key}
               className={metric.emphasis ? "bg-blue-400/[0.035]" : "hover:bg-gray-900/55"}
@@ -244,29 +284,51 @@ function StatementTable({
                   </span>
                 ) : null}
               </th>
-              {dashboard.periods.map((period) => {
+              {dashboard.periods.map((period, periodIndex) => {
                 const value = metricValue(metric, period.period_end);
+                const priorPeriod = dashboard.periods[periodIndex + 1];
+                const priorPeriodEnd =
+                  priorPeriod && period.fiscal_year - priorPeriod.fiscal_year === 1
+                    ? priorPeriod.period_end
+                    : null;
+                const yearOverYear = metricYearOverYear(
+                  metric,
+                  period.period_end,
+                  priorPeriodEnd,
+                );
                 return (
                   <td
                     key={period.period_end}
-                    className="border-t border-gray-800 px-3 py-3 text-right tabular-nums text-gray-300"
+                    className="border-t border-gray-800 px-3 py-2.5 text-right tabular-nums text-gray-300"
                   >
                     {value ? (
                       <a
                         href={value.source_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="group inline-flex items-center gap-1 hover:text-blue-300"
+                        className="group inline-flex min-h-9 flex-col items-end justify-center hover:text-blue-300"
                         title={
                           `${value.filed_at ? `Filed ${value.filed_at}. ` : ""}` +
-                          (value.calculation || "Reported SEC XBRL fact")
+                          (value.calculation || "Reported SEC XBRL fact") +
+                          (yearOverYear.status === "not_meaningful"
+                            ? ". YoY is not meaningful because the prior value was zero or negative."
+                            : "")
                         }
                       >
-                        {formatFinancialValue(value.value, metric.value_kind, scale)}
-                        <ExternalLink
-                          size={9}
-                          className="opacity-0 transition-opacity group-hover:opacity-100"
-                        />
+                        {displayMode !== "yoy" ? (
+                          <span className="inline-flex items-center gap-1">
+                            {formatFinancialValue(value.value, metric.value_kind, scale)}
+                            <ExternalLink
+                              size={9}
+                              className="opacity-0 transition-opacity group-hover:opacity-100"
+                            />
+                          </span>
+                        ) : null}
+                        {displayMode !== "values" ? (
+                          <span className={`mt-0.5 text-[9px] font-medium ${growthTone(yearOverYear)}`}>
+                            {formatYearOverYear(yearOverYear, displayMode === "both")}
+                          </span>
+                        ) : null}
                       </a>
                     ) : (
                       <span className="text-gray-700">—</span>
@@ -282,16 +344,92 @@ function StatementTable({
   );
 }
 
+interface StoredFinancialPreferences {
+  metricView: FinancialMetricView;
+  displayMode: FinancialDisplayMode;
+  customMetricKeys: string[];
+  trendMetricKeys: string[];
+}
+
+function storedFinancialPreferences(raw: string | null): StoredFinancialPreferences | null {
+  if (!raw) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    const candidate = parsed as Record<string, unknown>;
+    const metricView = candidate.metricView;
+    const displayMode = candidate.displayMode;
+    const customMetricKeys = candidate.customMetricKeys;
+    const trendMetricKeys = candidate.trendMetricKeys;
+    if (
+      !["core", "all", "custom"].includes(String(metricView)) ||
+      !["values", "both", "yoy"].includes(String(displayMode)) ||
+      !Array.isArray(customMetricKeys) ||
+      !customMetricKeys.every((item) => typeof item === "string") ||
+      !Array.isArray(trendMetricKeys) ||
+      !trendMetricKeys.every((item) => typeof item === "string")
+    ) {
+      return null;
+    }
+    return {
+      metricView: metricView as FinancialMetricView,
+      displayMode: displayMode as FinancialDisplayMode,
+      customMetricKeys: [...new Set(customMetricKeys)].slice(0, 100),
+      trendMetricKeys: [...new Set(trendMetricKeys)].slice(0, 5),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default function FinancialStatementsWorkspace() {
   const [ticker, setTicker] = useState("NVDA");
   const [years, setYears] = useState(10);
   const [scale, setScale] = useState<Scale>("billions");
   const [activeStatement, setActiveStatement] = useState<StatementKey>("income");
+  const [metricView, setMetricView] = useState<FinancialMetricView>("core");
+  const [displayMode, setDisplayMode] = useState<FinancialDisplayMode>("both");
+  const [customMetricKeys, setCustomMetricKeys] = useState<string[]>([
+    ...CORE_FINANCIAL_METRIC_KEYS,
+  ]);
+  const [trendMetricKeys, setTrendMetricKeys] = useState<string[]>([
+    ...DEFAULT_TREND_METRIC_KEYS,
+  ]);
+  const [customizing, setCustomizing] = useState(false);
+  const [metricSearch, setMetricSearch] = useState("");
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [dashboard, setDashboard] = useState<FinancialStatementDashboard | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const preferences = storedFinancialPreferences(
+        window.localStorage.getItem(FINANCIAL_PREFERENCES_KEY),
+      );
+      if (preferences) {
+        setMetricView(preferences.metricView);
+        setDisplayMode(preferences.displayMode);
+        setCustomMetricKeys(preferences.customMetricKeys);
+        setTrendMetricKeys(preferences.trendMetricKeys);
+      }
+      setPreferencesLoaded(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!preferencesLoaded) return;
+    const preferences: StoredFinancialPreferences = {
+      metricView,
+      displayMode,
+      customMetricKeys,
+      trendMetricKeys,
+    };
+    window.localStorage.setItem(FINANCIAL_PREFERENCES_KEY, JSON.stringify(preferences));
+  }, [customMetricKeys, displayMode, metricView, preferencesLoaded, trendMetricKeys]);
 
   async function loadDashboard(requestedTicker: string, requestedYears: number) {
     const normalized = requestedTicker.trim().toUpperCase();
@@ -349,6 +487,27 @@ export default function FinancialStatementsWorkspace() {
     () => dashboard?.statements.find((item) => item.key === activeStatement) ?? null,
     [activeStatement, dashboard],
   );
+  const visibleMetrics = useMemo(
+    () =>
+      selectedStatement
+        ? visibleFinancialMetrics(selectedStatement.metrics, metricView, customMetricKeys)
+        : [],
+    [customMetricKeys, metricView, selectedStatement],
+  );
+  const matchingMetrics = useMemo(() => {
+    if (!selectedStatement) return [];
+    const query = metricSearch.trim().toLowerCase();
+    return query
+      ? selectedStatement.metrics.filter((metric) => metric.label.toLowerCase().includes(query))
+      : selectedStatement.metrics;
+  }, [metricSearch, selectedStatement]);
+  const trendCandidates = useMemo(
+    () =>
+      dashboard?.statements
+        .flatMap((statement) => statement.metrics)
+        .filter((metric) => metric.value_kind === "currency") ?? [],
+    [dashboard],
+  );
 
   function submitTicker(event: FormEvent) {
     event.preventDefault();
@@ -383,6 +542,31 @@ export default function FinancialStatementsWorkspace() {
   function chooseYears(value: number) {
     setYears(value);
     void loadDashboard(ticker, value);
+  }
+
+  function setMetricsSelected(keys: string[], selected: boolean) {
+    const changed = new Set(keys);
+    setCustomMetricKeys((current) => {
+      const next = new Set(current);
+      changed.forEach((key) => (selected ? next.add(key) : next.delete(key)));
+      return [...next];
+    });
+    setMetricView("custom");
+  }
+
+  function toggleTrendMetric(key: string) {
+    setTrendMetricKeys((current) => {
+      if (current.includes(key)) return current.filter((item) => item !== key);
+      return current.length < 5 ? [...current, key] : current;
+    });
+  }
+
+  function restoreFinancialDefaults() {
+    setMetricView("core");
+    setDisplayMode("both");
+    setCustomMetricKeys([...CORE_FINANCIAL_METRIC_KEYS]);
+    setTrendMetricKeys([...DEFAULT_TREND_METRIC_KEYS]);
+    setMetricSearch("");
   }
 
   return (
@@ -520,9 +704,9 @@ export default function FinancialStatementsWorkspace() {
 
             <section className="rounded-xl border border-gray-800 bg-gray-900/35 p-4">
               <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500">
-                <BarChart3 size={12} /> Annual scale and profitability trend · USD billions
+                <BarChart3 size={12} /> Selected annual trends · USD billions
               </div>
-              <TrendChart dashboard={dashboard} />
+              <TrendChart dashboard={dashboard} metricKeys={trendMetricKeys} />
             </section>
 
             {dashboard.warnings.length ? (
@@ -561,12 +745,192 @@ export default function FinancialStatementsWorkspace() {
                   USD in {scale}; per-share values and share counts are labelled by row
                 </p>
               </div>
-              {selectedStatement ? (
+
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-800 bg-gray-900/35 px-3 py-2.5">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <span className="mr-1 text-[9px] font-semibold uppercase tracking-wide text-gray-600">
+                      Rows
+                    </span>
+                    {(
+                      [
+                        ["core", "Core"],
+                        ["all", "All"],
+                        ["custom", "Custom"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => {
+                          setMetricView(value);
+                          if (value === "custom") setCustomizing(true);
+                        }}
+                        className={
+                          "rounded-md px-2.5 py-1.5 text-[10px] font-semibold " +
+                          (metricView === value
+                            ? "bg-blue-600 text-white"
+                            : "text-gray-500 hover:bg-gray-800 hover:text-gray-200")
+                        }
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="h-5 w-px bg-gray-800" />
+                  <div className="flex items-center gap-1">
+                    <span className="mr-1 text-[9px] font-semibold uppercase tracking-wide text-gray-600">
+                      Display
+                    </span>
+                    {(
+                      [
+                        ["values", "Values"],
+                        ["both", "Values + YoY"],
+                        ["yoy", "YoY only"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setDisplayMode(value)}
+                        className={
+                          "rounded-md px-2.5 py-1.5 text-[10px] font-semibold " +
+                          (displayMode === value
+                            ? "bg-gray-700 text-white"
+                            : "text-gray-500 hover:bg-gray-800 hover:text-gray-200")
+                        }
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCustomizing((current) => !current)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-1.5 text-[10px] font-semibold text-gray-300 hover:border-blue-400/50 hover:text-blue-200"
+                >
+                  <Settings2 size={12} />
+                  {customizing ? "Close customize" : "Customize"}
+                </button>
+              </div>
+
+              {customizing && selectedStatement ? (
+                <section className="mb-3 rounded-xl border border-blue-400/15 bg-blue-400/[0.035] p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-100">
+                        Customize visible {selectedStatement.title.toLowerCase()} rows
+                      </h3>
+                      <p className="mt-1 text-[10px] text-gray-500">
+                        Selections are saved only in this browser and apply across company tickers.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="flex items-center gap-1.5 rounded-lg border border-gray-800 bg-gray-950 px-2.5 py-1.5">
+                        <Search size={11} className="text-gray-600" />
+                        <input
+                          value={metricSearch}
+                          onChange={(event) => setMetricSearch(event.target.value)}
+                          placeholder="Find a row"
+                          className="w-32 bg-transparent text-[10px] text-gray-200 outline-none placeholder:text-gray-700"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setMetricsSelected(matchingMetrics.map((metric) => metric.key), true)}
+                        className="rounded-md border border-gray-700 px-2 py-1.5 text-[9px] font-semibold text-gray-400 hover:text-white"
+                      >
+                        Select shown
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setMetricsSelected(matchingMetrics.map((metric) => metric.key), false)}
+                        className="rounded-md border border-gray-700 px-2 py-1.5 text-[9px] font-semibold text-gray-400 hover:text-white"
+                      >
+                        Clear shown
+                      </button>
+                      <button
+                        type="button"
+                        onClick={restoreFinancialDefaults}
+                        className="inline-flex items-center gap-1 rounded-md border border-gray-700 px-2 py-1.5 text-[9px] font-semibold text-gray-400 hover:text-white"
+                      >
+                        <RotateCcw size={10} /> Restore defaults
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {matchingMetrics.map((metric) => (
+                      <label
+                        key={metric.key}
+                        className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-800 bg-gray-950/70 px-3 py-2 text-[10px] text-gray-300 hover:border-gray-700"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={customMetricKeys.includes(metric.key)}
+                          onChange={(event) => setMetricsSelected([metric.key], event.target.checked)}
+                          className="accent-blue-500"
+                        />
+                        <span>{metric.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 border-t border-gray-800 pt-4">
+                    <div className="flex flex-wrap items-end justify-between gap-2">
+                      <div>
+                        <h3 className="text-xs font-semibold text-gray-100">Trend chart metrics</h3>
+                        <p className="mt-1 text-[10px] text-gray-500">
+                          Choose up to five currency metrics; units that cannot be compared are excluded.
+                        </p>
+                      </div>
+                      <span className="text-[9px] font-semibold uppercase text-gray-600">
+                        {trendMetricKeys.length} of 5 selected
+                      </span>
+                    </div>
+                    <div className="mt-3 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {trendCandidates.map((metric) => {
+                        const selected = trendMetricKeys.includes(metric.key);
+                        const disabled = !selected && trendMetricKeys.length >= 5;
+                        return (
+                          <label
+                            key={metric.key}
+                            className={
+                              "flex items-center gap-2 rounded-lg border border-gray-800 bg-gray-950/70 px-3 py-2 text-[10px] " +
+                              (disabled
+                                ? "cursor-not-allowed text-gray-700"
+                                : "cursor-pointer text-gray-300 hover:border-gray-700")
+                            }
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              disabled={disabled}
+                              onChange={() => toggleTrendMetric(metric.key)}
+                              className="accent-blue-500"
+                            />
+                            <span>{metric.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+
+              {selectedStatement && visibleMetrics.length ? (
                 <StatementTable
                   dashboard={dashboard}
                   statement={selectedStatement}
+                  metrics={visibleMetrics}
                   scale={scale}
+                  displayMode={displayMode}
                 />
+              ) : selectedStatement ? (
+                <div className="grid min-h-40 place-items-center rounded-xl border border-dashed border-gray-800 text-xs text-gray-600">
+                  No rows are selected for this statement. Open Customize or switch to Core/All.
+                </div>
               ) : null}
             </section>
 
@@ -579,7 +943,8 @@ export default function FinancialStatementsWorkspace() {
                     Reported values come from SEC Company Facts and annual 10-K/20-F filings. The backend
                     selects the latest filed annual observation for each period and preserves restatements.
                     Free cash flow is the transparent calculation “cash from operations − capital
-                    expenditures.” Missing facts remain blank rather than being estimated.
+                    expenditures.” YoY is “current ÷ prior − 1” and is marked N/M when the prior value is
+                    zero or negative. Missing facts remain blank rather than being estimated.
                   </p>
                 </div>
               </div>
