@@ -39,6 +39,22 @@ scales. Two synchronized charts calculate drawdown from the running high and dra
 inside the selected window. All calculations are deterministic, sourced from Yahoo Finance, and persisted
 through the backend's provider-labelled price store; opening this board does not invoke a model.
 
+The **Value Investors** workspace shows dated portfolio snapshots for a curated investor roster and links
+each current profile directly to its SEC 13-F filing. Expand an investor and choose **Recent moves** to see
+the largest material quarter-over-quarter share-count changes, including new positions and exits that may no
+longer appear among current top holdings. Its **Aggregated buys & sells** tab compares reported
+share counts between consecutive quarters and counts how many included managers added, opened, reduced,
+or exited each material position. It uses Stockcircle only to discover relevant manager names; the displayed
+holdings and activity come from SEC filings. This is delayed disclosure, not a real-time trade feed or a
+substitute for company research. See [docs/value-investor-activity.md](docs/value-investor-activity.md).
+
+The separate **Growth Investors** workspace tracks five active and distinct growth styles: ARK, Tiger Global,
+Dorsey Asset Management, Fundsmith, and Polen Capital. Each profile shows a dated SEC filing, its ten largest
+displayed US-listed positions, and selected Q2-versus-Q1 2026 share-count changes. Its separate **Company
+Aggregator** page searches shared top-ten holdings and manager-level adds, new positions, reductions, and exits.
+Stockcircle is used only to discover the roster; displayed portfolio data comes from official SEC filings.
+See [docs/growth-investor-activity.md](docs/growth-investor-activity.md).
+
 The top navigation also includes **Industry Research**. It renders the local portfolio policy, AI
 infrastructure, quantum-computing, biotech/AI-medicine, and dated review Markdown files. Its search returns
 matching passages across the whole local library. Reading and searching these files is deterministic and
@@ -114,7 +130,11 @@ Open [http://localhost:3000/research](http://localhost:3000/research) for compan
 company comparison. Open [http://localhost:3000/financials](http://localhost:3000/financials) for annual
 financial statements, [http://localhost:3000/prices](http://localhost:3000/prices) for adjusted price,
 drawdown, and drawup history, and [http://localhost:3000/industries](http://localhost:3000/industries) for
-the searchable industry library.
+the searchable industry library. Open [http://localhost:3000/gurus](http://localhost:3000/gurus) for
+value-investor portfolios and aggregated reported activity. Open
+[http://localhost:3000/growth-investors](http://localhost:3000/growth-investors) for growth-investor profiles
+and [http://localhost:3000/growth-investors/companies](http://localhost:3000/growth-investors/companies) for
+the separate company aggregator.
 The backend defaults to
 `http://127.0.0.1:8000`; set `INVESTMENT_OS_API_URL` locally only if that changes.
 

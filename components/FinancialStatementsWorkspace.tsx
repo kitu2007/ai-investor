@@ -493,9 +493,11 @@ function StatementTable({
   metrics: AnnualFinancialMetric[];
   scale: Scale;
   displayMode: FinancialDisplayMode;
-  chartMetricKeys: string[];
+  chartMetricKeys?: string[];
   onToggleChartMetric: (metric: AnnualFinancialMetric) => void;
 }) {
+  const selectedChartMetricKeys = Array.isArray(chartMetricKeys) ? chartMetricKeys : [];
+
   function growthTone(result: YearOverYearResult): string {
     if (result.status === "not_meaningful") return "text-amber-300/80";
     if (result.status !== "available" || result.value === 0) return "text-gray-600";
@@ -525,7 +527,7 @@ function StatementTable({
         </thead>
         <tbody>
           {metrics.map((metric) => {
-            const chartSelected = chartMetricKeys.includes(metric.key);
+            const chartSelected = selectedChartMetricKeys.includes(metric.key);
             return (
               <tr
                 key={metric.key}

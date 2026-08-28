@@ -10,7 +10,8 @@ import {
 
 const TABS = [
   { href: "/",       label: "My Portfolio",    key: "portfolio" },
-  { href: "/gurus",  label: "Guru Portfolios", key: "gurus"     },
+  { href: "/gurus",  label: "Value Investors", key: "gurus"     },
+  { href: "/growth-investors", label: "Growth Investors", key: "growth-investors" },
   { href: "/fallen", label: "Fallen Angels",   key: "fallen"    },
   { href: "/rising", label: "Rising Angels",   key: "rising"    },
   { href: "/research", label: "Investment OS", key: "research", icon: BrainCircuit },
