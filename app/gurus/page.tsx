@@ -85,6 +85,12 @@ interface ConsensusResponse {
   rows: ConsensusActivity[];
 }
 
+type LatestPrice = {
+  close: number;
+  asOf: string;
+  retrievedAt: string;
+};
+
 const ACTION_STYLE: Record<string, string> = {
   New:    "bg-emerald-900 text-emerald-300",
   Add:    "bg-blue-900 text-blue-300",
@@ -121,6 +127,15 @@ function formatReportingDate(date: string | undefined) {
   }).format(new Date(`${date}T00:00:00.000Z`));
 }
 
+function formatCurrentPrice(price: LatestPrice | undefined) {
+  if (!price) return "—";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: price.close >= 1 ? 2 : 4,
+  }).format(price.close);
+}
+
 function formatChangePct(value: number | null) {
   if (value == null) return "new";
   const sign = value > 0 ? "+" : "";
@@ -134,11 +149,48 @@ function formatWeightChange(move: ConsensusInvestorMove) {
 function GuruCard({ guru, initiallyExpanded = false }: { guru: GuruProfile; initiallyExpanded?: boolean }) {
   const [expanded, setExpanded] = useState(initiallyExpanded);
   const [detailView, setDetailView] = useState<"holdings" | "moves">("holdings");
+  const [latestPrices, setLatestPrices] = useState<Record<string, LatestPrice>>({});
+  const [pricesLoading, setPricesLoading] = useState(false);
   const maxPct = Math.max(...guru.holdings.map((h) => h.pctPortfolio));
 
   useEffect(() => {
     if (initiallyExpanded) setExpanded(true);
   }, [initiallyExpanded]);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const tickers = [...new Set([
+      ...guru.holdings.map((holding) => holding.ticker),
+      ...(guru.recentMoves ?? []).map((move) => move.ticker),
+    ])];
+    let active = true;
+    setPricesLoading(true);
+    void Promise.all(
+      tickers.map(async (ticker) => {
+        const response = await fetch(
+          `/api/investment-os/price-history?ticker=${encodeURIComponent(ticker)}&range=3m`,
+        );
+        if (!response.ok) return [ticker, null] as const;
+        const payload = (await response.json()) as {
+          retrievedAt: string;
+          summary: { latestClose: number; endDate: string };
+        };
+        return [ticker, {
+          close: payload.summary.latestClose,
+          asOf: payload.summary.endDate,
+          retrievedAt: payload.retrievedAt,
+        }] as const;
+      }),
+    ).then((results) => {
+      if (!active) return;
+      setLatestPrices(Object.fromEntries(results.filter((result): result is [string, LatestPrice] => result[1] !== null)));
+    }).finally(() => {
+      if (active) setPricesLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [expanded, guru.holdings, guru.recentMoves]);
 
   return (
     <div className="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
@@ -209,6 +261,7 @@ function GuruCard({ guru, initiallyExpanded = false }: { guru: GuruProfile; init
                   <th className="px-4 py-2.5 text-left text-gray-400 font-medium w-40">% Portfolio</th>
                   <th className="px-4 py-2.5 text-right text-gray-400 font-medium">Value</th>
                   <th className="px-4 py-2.5 text-right text-gray-400 font-medium">As reported / price context</th>
+                  <th className="px-4 py-2.5 text-right text-gray-400 font-medium">Current price</th>
                   <th className="px-4 py-2.5 text-center text-gray-400 font-medium">Action</th>
                   <th className="px-4 py-2.5 text-left text-gray-400 font-medium">Notes</th>
                 </tr>
@@ -230,6 +283,12 @@ function GuruCard({ guru, initiallyExpanded = false }: { guru: GuruProfile; init
                     <td className="px-4 py-3 text-right text-[11px] leading-5 text-gray-400">
                       <div>{h.quarterReported} · {formatReportingDate(h.reportingPeriodEnd)}</div>
                       <div title={h.priceBasis} className="text-gray-500">{h.approximatePrice ?? "price n/a"} at period end</div>
+                    </td>
+                    <td className="px-4 py-3 text-right text-[11px] leading-5 text-gray-300">
+                      <div title={latestPrices[h.ticker] ? `Latest adjusted close: ${latestPrices[h.ticker].asOf}; retrieved ${new Date(latestPrices[h.ticker].retrievedAt).toLocaleString()}` : "Current price unavailable"}>
+                        {pricesLoading && !latestPrices[h.ticker] ? "Loading…" : formatCurrentPrice(latestPrices[h.ticker])}
+                      </div>
+                      {latestPrices[h.ticker] ? <div className="text-gray-600">close {latestPrices[h.ticker].asOf}</div> : null}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${ACTION_STYLE[h.action]}`}>
@@ -258,6 +317,7 @@ function GuruCard({ guru, initiallyExpanded = false }: { guru: GuruProfile; init
 	                      <th className="px-4 py-2.5 text-right font-medium text-gray-400">Reported shares</th>
 	                      <th className="px-4 py-2.5 text-right font-medium text-gray-400">Portfolio weight</th>
 	                      <th className="px-4 py-2.5 text-right font-medium text-gray-400">Approx price</th>
+	                      <th className="px-4 py-2.5 text-right font-medium text-gray-400">Current price</th>
 	                      <th className="px-4 py-2.5 text-left font-medium text-gray-400">Comparison</th>
 	                    </tr>
                   </thead>
@@ -283,6 +343,12 @@ function GuruCard({ guru, initiallyExpanded = false }: { guru: GuruProfile; init
 	                        <td className="px-4 py-3 text-right text-gray-300">
 	                          <span title={move.priceBasis}>{move.approximatePrice ?? "—"}</span>
 	                        </td>
+	                        <td className="px-4 py-3 text-right text-[11px] leading-5 text-gray-300">
+                          <div title={latestPrices[move.ticker] ? `Latest adjusted close: ${latestPrices[move.ticker].asOf}; retrieved ${new Date(latestPrices[move.ticker].retrievedAt).toLocaleString()}` : "Current price unavailable"}>
+                            {pricesLoading && !latestPrices[move.ticker] ? "Loading…" : formatCurrentPrice(latestPrices[move.ticker])}
+                          </div>
+                          {latestPrices[move.ticker] ? <div className="text-gray-600">close {latestPrices[move.ticker].asOf}</div> : null}
+                        </td>
 	                        <td className="px-4 py-3 text-gray-500">{move.quarterReported}</td>
                       </tr>
                     ))}
