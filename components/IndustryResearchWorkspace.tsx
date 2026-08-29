@@ -149,6 +149,16 @@ export default function IndustryResearchWorkspace() {
             </a>
           );
         }
+        if (href?.startsWith("/research?") || href?.startsWith("/prices?") || href?.startsWith("/financials?")) {
+          return (
+            <a
+              href={href}
+              className="text-blue-300 underline decoration-blue-400/30 underline-offset-2 hover:text-blue-200"
+            >
+              {children}
+            </a>
+          );
+        }
         return <span className="text-gray-400">{children}</span>;
       },
     }),
