@@ -154,19 +154,15 @@ function GuruCard({ guru, initiallyExpanded = false }: { guru: GuruProfile; init
   const maxPct = Math.max(...guru.holdings.map((h) => h.pctPortfolio));
 
   useEffect(() => {
-    if (initiallyExpanded) setExpanded(true);
-  }, [initiallyExpanded]);
-
-  useEffect(() => {
     if (!expanded) return;
     const tickers = [...new Set([
       ...guru.holdings.map((holding) => holding.ticker),
       ...(guru.recentMoves ?? []).map((move) => move.ticker),
     ])];
     let active = true;
-    setPricesLoading(true);
-    void Promise.all(
-      tickers.map(async (ticker) => {
+    const timer = window.setTimeout(() => {
+      setPricesLoading(true);
+      void Promise.all(tickers.map(async (ticker) => {
         const response = await fetch(
           `/api/investment-os/price-history?ticker=${encodeURIComponent(ticker)}&range=3m`,
         );
@@ -180,15 +176,16 @@ function GuruCard({ guru, initiallyExpanded = false }: { guru: GuruProfile; init
           asOf: payload.summary.endDate,
           retrievedAt: payload.retrievedAt,
         }] as const;
-      }),
-    ).then((results) => {
-      if (!active) return;
-      setLatestPrices(Object.fromEntries(results.filter((result): result is [string, LatestPrice] => result[1] !== null)));
-    }).finally(() => {
-      if (active) setPricesLoading(false);
-    });
+      })).then((results) => {
+        if (!active) return;
+        setLatestPrices(Object.fromEntries(results.filter((result): result is [string, LatestPrice] => result[1] !== null)));
+      }).finally(() => {
+        if (active) setPricesLoading(false);
+      });
+    }, 0);
     return () => {
       active = false;
+      window.clearTimeout(timer);
     };
   }, [expanded, guru.holdings, guru.recentMoves]);
 

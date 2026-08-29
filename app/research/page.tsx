@@ -10,7 +10,7 @@ export default async function ResearchPage({
   const initialTicker = typeof queryTicker === "string" ? queryTicker.trim().toUpperCase() || "AAPL" : "AAPL";
   return (
     <NavShell active="research">
-      <InvestmentWorkspace initialTicker={initialTicker} />
+      <InvestmentWorkspace key={initialTicker} initialTicker={initialTicker} />
     </NavShell>
   );
 }

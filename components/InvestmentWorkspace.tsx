@@ -1134,10 +1134,6 @@ export default function InvestmentWorkspace({ initialTicker = "AAPL" }: { initia
   const [statusLoading, setStatusLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    setTicker(initialTicker);
-  }, [initialTicker]);
-
   const normalizedTicker = useMemo(() => ticker.trim().toUpperCase(), [ticker]);
   const companyContext = useMemo(() => companyContextForTicker(normalizedTicker), [normalizedTicker]);
   const researchActive = Boolean(

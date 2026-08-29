@@ -10,7 +10,7 @@ export default async function PricesPage({
   const initialTicker = typeof queryTicker === "string" ? queryTicker.trim().toUpperCase() || "NVDA" : "NVDA";
   return (
     <NavShell active="prices">
-      <PriceHistoryWorkspace initialTicker={initialTicker} />
+      <PriceHistoryWorkspace key={initialTicker} initialTicker={initialTicker} />
     </NavShell>
   );
 }

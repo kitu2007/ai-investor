@@ -755,7 +755,6 @@ export default function FinancialStatementsWorkspace({ initialTicker = "NVDA" }:
 
   useEffect(() => {
     let active = true;
-    setTicker(initialTicker);
     void Promise.all([
       jsonRequest<FinancialStatementDashboard>(
         `/api/investment-os/financial-statements?ticker=${encodeURIComponent(initialTicker)}&years=10`,

@@ -429,7 +429,6 @@ export default function PriceHistoryWorkspace({ initialTicker = "NVDA" }: { init
   }, []);
 
   useEffect(() => {
-    setTicker(initialTicker);
     const timer = window.setTimeout(() => void loadHistory(initialTicker, "10y"), 0);
     return () => window.clearTimeout(timer);
   }, [initialTicker, loadHistory]);

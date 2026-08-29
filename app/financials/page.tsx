@@ -10,7 +10,7 @@ export default async function FinancialsPage({
   const initialTicker = typeof queryTicker === "string" ? queryTicker.trim().toUpperCase() || "NVDA" : "NVDA";
   return (
     <NavShell active="financials">
-      <FinancialStatementsWorkspace initialTicker={initialTicker} />
+      <FinancialStatementsWorkspace key={initialTicker} initialTicker={initialTicker} />
     </NavShell>
   );
 }
