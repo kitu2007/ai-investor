@@ -114,6 +114,10 @@ function formatChangePct(value: number | null) {
   return `${sign}${value.toFixed(1)}%`;
 }
 
+function formatWeightChange(move: ConsensusInvestorMove) {
+  return `${move.priorPctPortfolio.toFixed(2)}% → ${move.currentPctPortfolio.toFixed(2)}%`;
+}
+
 function GuruCard({ guru, initiallyExpanded = false }: { guru: GuruProfile; initiallyExpanded?: boolean }) {
   const [expanded, setExpanded] = useState(initiallyExpanded);
   const [detailView, setDetailView] = useState<"holdings" | "moves">("holdings");
@@ -327,8 +331,11 @@ function ConsensusView({ data }: { data: ConsensusResponse }) {
             <div className={`font-medium ${tone === "buy" ? "text-emerald-300" : "text-red-300"}`}>
               {move.investorName} <span className="text-gray-500">/ {move.firm}</span>
             </div>
-            <div className="mt-1 text-[11px] leading-relaxed text-gray-400">
-              {move.action}; current {move.currentPctPortfolio.toFixed(2)}%; shares {formatShares(move.priorSharesM)} → {formatShares(move.currentSharesM)} ({formatChangePct(move.shareChangePct)}); {move.quarterReported}; <span title={move.priceBasis}>{move.approximatePrice ?? "price n/a"}</span>
+            <div className="mt-1 text-[11px] leading-relaxed text-gray-300">
+              {move.action}; portfolio {formatWeightChange(move)}; {move.quarterReported}; <span title={move.priceBasis}>{move.approximatePrice ?? "price n/a"}</span>
+            </div>
+            <div className="mt-0.5 text-[10px] leading-relaxed text-gray-500">
+              Shares: {formatShares(move.priorSharesM)} → {formatShares(move.currentSharesM)} ({formatChangePct(move.shareChangePct)})
             </div>
           </button>
         ))}
