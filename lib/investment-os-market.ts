@@ -9,18 +9,38 @@ const yf: any = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
 export type PricePoint = { date: string; close: number };
 
+export interface PriceHistoryOptions {
+  period1?: Date;
+  interval?: "1d" | "1wk";
+}
+
+export async function earningsTrend(ticker: string): Promise<{
+  trend: unknown[];
+  defaultMethodology?: string | null;
+}> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const summary: any = await yf.quoteSummary(ticker, { modules: ["earningsTrend"] });
+  return {
+    trend: summary?.earningsTrend?.trend ?? [],
+    defaultMethodology: summary?.earningsTrend?.defaultMethodology ?? null,
+  };
+}
+
 function startDate(): Date {
   const date = new Date();
   date.setMonth(date.getMonth() - 18);
   return date;
 }
 
-export async function priceHistory(ticker: string): Promise<PricePoint[]> {
+export async function priceHistory(
+  ticker: string,
+  options: PriceHistoryOptions = {},
+): Promise<PricePoint[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chart: any = await yf.chart(ticker, {
-    period1: startDate(),
+    period1: options.period1 ?? startDate(),
     period2: new Date(),
-    interval: "1d",
+    interval: options.interval ?? "1d",
   });
   return (chart?.quotes ?? [])
     .filter(

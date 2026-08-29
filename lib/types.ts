@@ -24,6 +24,9 @@ export const VALUE_INVESTORS = [
   "David Tepper",
   "Michael Burry",
   "Chris Hohn",
+  "ValueAct Capital",
+  "Mario Gabelli",
+  "Ray Dalio",
   "Tom Russo",
   "Howard Marks",
   "David Einhorn",
@@ -31,6 +34,17 @@ export const VALUE_INVESTORS = [
   "Nick Sleep",
   "Francisco Parames",
   "Allan Mecham",
+  "Jeremy Grantham",
+  "Prem Watsa",
+  "Carl Icahn",
+  "Chris Davis",
+  "Donald Yacktman",
+  "David Abrams",
+  "Glenn Greenberg",
+  "Tom Gayner",
+  "Cliff Sosin",
+  "Ensemble Capital",
+  "Broad Run Investment Management",
 ] as const;
 
 export type ValueInvestor = typeof VALUE_INVESTORS[number];
