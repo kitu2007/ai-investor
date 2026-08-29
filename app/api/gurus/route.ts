@@ -50,9 +50,24 @@ export interface ConsensusActivity {
   ticker: string;
   cusip: string;
   name: string;
-  buyers: string[];
-  sellers: string[];
+  buyers: ConsensusInvestorMove[];
+  sellers: ConsensusInvestorMove[];
   net: number;
+}
+
+export interface ConsensusInvestorMove {
+  investorId: string;
+  investorName: string;
+  firm: string;
+  action: GuruMove["action"];
+  priorSharesM: number;
+  currentSharesM: number;
+  shareChangePct: number | null;
+  priorPctPortfolio: number;
+  currentPctPortfolio: number;
+  quarterReported: string;
+  approximatePrice?: string;
+  priceBasis?: string;
 }
 
 function approximateQuarterEndPrice(valueB: number | null, sharesM: number | null): string | undefined {
@@ -112,45 +127,16 @@ const secMove = (
 });
 
 // Material share-count changes (at least 0.25% of either quarter's reported
-// 13-F value) found in Q2 2026 and Q1 2026 SEC filings. Rows below require at
-// least two managers on one side or two managers with opposing activity.
-const consensusActivity = (
-  ticker: string,
-  cusip: string,
-  name: string,
-  buyers: string[],
-  sellers: string[],
-): ConsensusActivity => ({ ticker, cusip, name, buyers, sellers, net: buyers.length - sellers.length });
-
-const CONSENSUS_ACTIVITY: ConsensusActivity[] = [
-  consensusActivity("MSFT", "594918104", "Microsoft", ["Bill Ackman (Add)", "Joel Greenblatt / Gotham (Add)"], ["David Tepper (Exit)", "Chris Hohn / TCI (Exit)", "Mario Gabelli / GAMCO (Reduce)", "Bridgewater (Reduce)"]),
-  consensusActivity("AMZN", "023135106", "Amazon", ["David Tepper (Add)", "ValueAct Capital (Add)", "Joel Greenblatt / Gotham (Add)"], ["Bill Ackman (Reduce)", "Mario Gabelli / GAMCO (Reduce)", "Bridgewater (Reduce)"]),
-  consensusActivity("GOOG", "02079K107", "Alphabet Class C", ["Warren Buffett / Berkshire (Add)", "David Tepper (Add)", "Chris Hohn / TCI (Add)", "Mario Gabelli / GAMCO (Add)"], ["Bill Ackman (Exit)", "Bridgewater (Reduce)"]),
-  consensusActivity("META", "30303M102", "Meta Platforms", ["David Tepper (Add)", "Bill Ackman (Add)", "Mario Gabelli / GAMCO (Add)"], ["Bridgewater (Reduce)"]),
-  consensusActivity("AAPL", "037833100", "Apple", [], ["Joel Greenblatt / Gotham (Reduce)", "Mario Gabelli / GAMCO (Reduce)", "Bridgewater (Reduce)"]),
-  consensusActivity("MU", "595112103", "Micron Technology", [], ["David Tepper (Reduce)", "Joel Greenblatt / Gotham (Reduce)", "Bridgewater (Reduce)"]),
-  consensusActivity("NVDA", "67066G104", "NVIDIA", ["David Tepper (Add)", "Mario Gabelli / GAMCO (Add)"], ["Joel Greenblatt / Gotham (Reduce)", "Bridgewater (Reduce)"]),
-  consensusActivity("AVGO", "11135F101", "Broadcom", ["David Tepper (New)"], ["Joel Greenblatt / Gotham (Reduce)", "Bridgewater (Reduce)"]),
-  consensusActivity("IVV", "464287200", "iShares Core S&P 500 ETF", ["Joel Greenblatt / Gotham (Add)", "Bridgewater (Add)"], ["Mario Gabelli / GAMCO (Reduce)"]),
-  consensusActivity("SPGI", "78409V104", "S&P Global", ["Bill Ackman (New)", "Chris Hohn / TCI (Add)"], ["Li Lu / Himalaya (Exit)"]),
-  consensusActivity("GOOGL", "02079K305", "Alphabet Class A", ["Warren Buffett / Berkshire (Add)", "Joel Greenblatt / Gotham (Add)"], ["Bridgewater (Reduce)"]),
-  consensusActivity("BAC", "060505104", "Bank of America", [], ["Warren Buffett / Berkshire (Reduce)", "Li Lu / Himalaya (Exit)"]),
-  consensusActivity("AMD", "007903107", "Advanced Micro Devices", [], ["David Tepper (Reduce)", "Bridgewater (Reduce)"]),
-  consensusActivity("CAT", "149123101", "Caterpillar", [], ["Joel Greenblatt / Gotham (Reduce)", "Bridgewater (Reduce)"]),
-  consensusActivity("LLY", "532457108", "Eli Lilly", ["Mario Gabelli / GAMCO (Add)", "Bridgewater (Add)"], []),
-  consensusActivity("LRCX", "512807306", "Lam Research", [], ["Joel Greenblatt / Gotham (Reduce)", "Bridgewater (Reduce)"]),
-  consensusActivity("SNDK", "80004C200", "Sandisk", [], ["David Tepper (Exit)", "Joel Greenblatt / Gotham (Reduce)"]),
-  consensusActivity("HSIC", "806407102", "Henry Schein", ["David Einhorn / DME (Add)", "Mario Gabelli / GAMCO (Add)"], []),
-  consensusActivity("SPB", "84790A105", "Spectrum Brands", [], ["David Einhorn / DME (Reduce)", "Mario Gabelli / GAMCO (Reduce)"]),
-  consensusActivity("SPY", "78462F103", "SPDR S&P 500 ETF Trust", ["Joel Greenblatt / Gotham (Add)", "Bridgewater (Add)"], []),
-  consensusActivity("TPR", "876030107", "Tapestry", ["Joel Greenblatt / Gotham (Add)", "Bridgewater (Add)"], []),
-  consensusActivity("FTI", "G87110105", "TechnipFMC", ["Joel Greenblatt / Gotham (Add)", "Bridgewater (Add)"], []),
-  consensusActivity("UBER", "90353T100", "Uber Technologies", ["David Tepper (Add)", "Bill Ackman (Add)"], []),
-  consensusActivity("VOO", "922908363", "Vanguard S&P 500 ETF", ["Joel Greenblatt / Gotham (Add)", "Bridgewater (Add)"], []),
-  consensusActivity("V", "92826C839", "Visa", ["Bill Ackman (New)", "Chris Hohn / TCI (Add)"], []),
-  consensusActivity("VST", "92840M102", "Vistra", ["David Tepper (Add)", "Bridgewater (Add)"], []),
-  consensusActivity("WDC", "958102105", "Western Digital", [], ["Joel Greenblatt / Gotham (Reduce)", "Bridgewater (Reduce)"]),
-];
+// 13-F value) found in Q2 2026 and Q1 2026 SEC filings. The aggregate endpoint
+// derives investor-level details from the current profile records below.
+const CONSENSUS_CUSIPS = new Set([
+  "594918104", "023135106", "02079K107", "30303M102", "037833100",
+  "595112103", "67066G104", "11135F101", "464287200", "78409V104",
+  "02079K305", "060505104", "007903107", "149123101", "532457108",
+  "512807306", "80004C200", "806407102", "84790A105", "78462F103",
+  "876030107", "G87110105", "90353T100", "922908363", "92826C839",
+  "92840M102", "958102105",
+]);
 
 const GURU_PORTFOLIOS: GuruProfile[] = [
   {
@@ -605,6 +591,62 @@ function withMovePriceContext(guru: GuruProfile): GuruProfile {
   return { ...guru, recentMoves };
 }
 
+function shareChangePct(move: GuruMove): number | null {
+  if (move.priorSharesM === 0) return null;
+  return ((move.currentSharesM - move.priorSharesM) / move.priorSharesM) * 100;
+}
+
+function buildConsensusActivity(): ConsensusActivity[] {
+  const rows = new Map<string, ConsensusActivity>();
+
+  const ensureRow = (move: GuruMove) => {
+    const existing = rows.get(move.cusip);
+    if (existing) return existing;
+    const created: ConsensusActivity = {
+      ticker: move.ticker,
+      cusip: move.cusip,
+      name: move.name,
+      buyers: [],
+      sellers: [],
+      net: 0,
+    };
+    rows.set(move.cusip, created);
+    return created;
+  };
+
+  for (const rawGuru of GURU_PORTFOLIOS) {
+    const guru = withMovePriceContext(rawGuru);
+    for (const move of guru.recentMoves ?? []) {
+      if (!CONSENSUS_CUSIPS.has(move.cusip)) continue;
+      const investorMove: ConsensusInvestorMove = {
+        investorId: guru.id,
+        investorName: guru.name,
+        firm: guru.firm,
+        action: move.action,
+        priorSharesM: move.priorSharesM,
+        currentSharesM: move.currentSharesM,
+        shareChangePct: shareChangePct(move),
+        priorPctPortfolio: move.priorPctPortfolio,
+        currentPctPortfolio: move.currentPctPortfolio,
+        quarterReported: move.quarterReported,
+        approximatePrice: move.approximatePrice,
+        priceBasis: move.priceBasis,
+      };
+      const row = ensureRow(move);
+      if (move.action === "New" || move.action === "Add") row.buyers.push(investorMove);
+      else row.sellers.push(investorMove);
+      row.net = row.buyers.length - row.sellers.length;
+    }
+  }
+
+  return [...rows.values()].sort((a, b) =>
+    b.net - a.net
+      || b.buyers.length - a.buyers.length
+      || (b.buyers.length + b.sellers.length) - (a.buyers.length + a.sellers.length)
+      || a.name.localeCompare(b.name),
+  );
+}
+
 export async function GET(req: NextRequest) {
   if (req.nextUrl.searchParams.get("view") === "consensus") {
     return NextResponse.json({
@@ -612,12 +654,8 @@ export async function GET(req: NextRequest) {
       sourceCatalog: "Stockcircle value-investor directory",
       sourceCatalogUrl: "https://stockcircle.com/value-investors",
       includedManagers: ["Berkshire Hathaway", "Appaloosa", "Himalaya Capital", "Dalal Street", "Pershing Square", "TCI Fund Management", "ValueAct Capital", "DME Capital Management", "Gotham Asset Management", "GAMCO Investors", "Bridgewater Associates"],
-      methodology: "SEC 13-F share-count changes from Q1 to Q2 2026. A material change is at least 0.25% of either quarter's reported value. Counts represent managers, not dollars. The All signals view sorts by net buyers minus sellers, high to low.",
-      rows: [...CONSENSUS_ACTIVITY].sort((a, b) =>
-        b.net - a.net
-          || b.buyers.length - a.buyers.length
-          || a.name.localeCompare(b.name),
-      ),
+      methodology: "SEC 13-F share-count changes from Q1 to Q2 2026. A material change is at least 0.25% of either quarter's reported value. Counts represent managers, not dollars. The All signals view sorts by net buyers minus sellers, high to low. Investor details show action, current reported portfolio weight, share-count change, comparison period, and approximate quarter-end price.",
+      rows: buildConsensusActivity(),
     });
   }
   const id = req.nextUrl.searchParams.get("id");

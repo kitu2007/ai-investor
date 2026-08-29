@@ -53,9 +53,24 @@ interface ConsensusActivity {
   ticker: string;
   cusip: string;
   name: string;
-  buyers: string[];
-  sellers: string[];
+  buyers: ConsensusInvestorMove[];
+  sellers: ConsensusInvestorMove[];
   net: number;
+}
+
+interface ConsensusInvestorMove {
+  investorId: string;
+  investorName: string;
+  firm: string;
+  action: "New" | "Add" | "Reduce" | "Exit";
+  priorSharesM: number;
+  currentSharesM: number;
+  shareChangePct: number | null;
+  priorPctPortfolio: number;
+  currentPctPortfolio: number;
+  quarterReported: string;
+  approximatePrice?: string;
+  priceBasis?: string;
 }
 
 interface ConsensusResponse {
@@ -93,10 +108,20 @@ function formatShares(millions: number) {
   return `${(millions * 1000).toFixed(1)}K`;
 }
 
-function GuruCard({ guru }: { guru: GuruProfile }) {
-  const [expanded, setExpanded] = useState(false);
+function formatChangePct(value: number | null) {
+  if (value == null) return "new";
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toFixed(1)}%`;
+}
+
+function GuruCard({ guru, initiallyExpanded = false }: { guru: GuruProfile; initiallyExpanded?: boolean }) {
+  const [expanded, setExpanded] = useState(initiallyExpanded);
   const [detailView, setDetailView] = useState<"holdings" | "moves">("holdings");
   const maxPct = Math.max(...guru.holdings.map((h) => h.pctPortfolio));
+
+  useEffect(() => {
+    if (initiallyExpanded) setExpanded(true);
+  }, [initiallyExpanded]);
 
   return (
     <div className="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
@@ -252,13 +277,64 @@ function GuruCard({ guru }: { guru: GuruProfile }) {
 
 function ConsensusView({ data }: { data: ConsensusResponse }) {
   const [filter, setFilter] = useState<"all" | "bought" | "sold">("all");
+  const [sortKey, setSortKey] = useState<"net" | "company" | "buyers" | "sellers" | "activity">("net");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const sortButton = (key: typeof sortKey, label: string, className = "") => (
+    <button
+      type="button"
+      onClick={() => {
+        if (sortKey === key) setSortDirection((direction) => (direction === "asc" ? "desc" : "asc"));
+        else {
+          setSortKey(key);
+          setSortDirection(key === "company" ? "asc" : "desc");
+        }
+      }}
+      className={`inline-flex items-center gap-1 hover:text-white ${className}`}
+    >
+      {label}
+      {sortKey === key ? <span className="text-[10px]">{sortDirection === "asc" ? "↑" : "↓"}</span> : null}
+    </button>
+  );
   const rows = [...data.rows]
     .filter((row) => filter === "all" || (filter === "bought" ? row.buyers.length > 0 : row.sellers.length > 0))
     .sort((a, b) => {
-      if (filter === "bought") return b.buyers.length - a.buyers.length || b.net - a.net;
-      if (filter === "sold") return b.sellers.length - a.sellers.length || a.net - b.net;
-      return b.net - a.net || b.buyers.length - a.buyers.length || a.name.localeCompare(b.name);
+      const direction = sortDirection === "asc" ? 1 : -1;
+      const activityA = a.buyers.length + a.sellers.length;
+      const activityB = b.buyers.length + b.sellers.length;
+      let comparison = 0;
+      if (sortKey === "company") comparison = a.name.localeCompare(b.name);
+      if (sortKey === "buyers") comparison = a.buyers.length - b.buyers.length;
+      if (sortKey === "sellers") comparison = a.sellers.length - b.sellers.length;
+      if (sortKey === "activity") comparison = activityA - activityB;
+      if (sortKey === "net") comparison = a.net - b.net;
+      return comparison * direction || b.net - a.net || b.buyers.length - a.buyers.length || a.name.localeCompare(b.name);
     });
+
+  const investorDetails = (moves: ConsensusInvestorMove[], tone: "buy" | "sell") => {
+    if (!moves.length) return "—";
+    return (
+      <div className="space-y-2">
+        {moves.map((move) => (
+          <button
+            key={`${move.investorId}-${move.action}`}
+            type="button"
+            onDoubleClick={() => {
+              window.location.href = `/gurus?investor=${move.investorId}`;
+            }}
+            title="Double-click to open this investor's portfolio"
+            className="block w-full rounded-lg border border-transparent p-2 text-left hover:border-gray-700 hover:bg-gray-800"
+          >
+            <div className={`font-medium ${tone === "buy" ? "text-emerald-300" : "text-red-300"}`}>
+              {move.investorName} <span className="text-gray-500">/ {move.firm}</span>
+            </div>
+            <div className="mt-1 text-[11px] leading-relaxed text-gray-400">
+              {move.action}; current {move.currentPctPortfolio.toFixed(2)}%; shares {formatShares(move.priorSharesM)} → {formatShares(move.currentSharesM)} ({formatChangePct(move.shareChangePct)}); {move.quarterReported}; <span title={move.priceBasis}>{move.approximatePrice ?? "price n/a"}</span>
+            </div>
+          </button>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -309,12 +385,12 @@ function ConsensusView({ data }: { data: ConsensusResponse }) {
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-gray-700 bg-gray-800/50">
-              <th className="px-4 py-3 text-left font-medium text-gray-400">Company</th>
-              <th className="px-4 py-3 text-center font-medium text-gray-400">Buyers</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-400">{sortButton("company", "Company")}</th>
+              <th className="px-4 py-3 text-center font-medium text-gray-400">{sortButton("buyers", "Buyers")}</th>
               <th className="px-4 py-3 text-left font-medium text-gray-400">Reported adds / new positions</th>
-              <th className="px-4 py-3 text-center font-medium text-gray-400">Sellers</th>
+              <th className="px-4 py-3 text-center font-medium text-gray-400">{sortButton("sellers", "Sellers")}</th>
               <th className="px-4 py-3 text-left font-medium text-gray-400">Reported reductions / exits</th>
-              <th className="px-4 py-3 text-center font-medium text-gray-400">Net</th>
+              <th className="px-4 py-3 text-center font-medium text-gray-400">{sortButton("net", "Net")}</th>
             </tr>
           </thead>
           <tbody>
@@ -329,11 +405,11 @@ function ConsensusView({ data }: { data: ConsensusResponse }) {
                   </td>
                   <td className="px-4 py-3 text-center text-emerald-300">{row.buyers.length}</td>
                   <td className="max-w-sm px-4 py-3 leading-relaxed text-gray-300">
-                    {row.buyers.length ? row.buyers.join(", ") : "—"}
+                    {investorDetails(row.buyers, "buy")}
                   </td>
                   <td className="px-4 py-3 text-center text-red-300">{row.sellers.length}</td>
                   <td className="max-w-sm px-4 py-3 leading-relaxed text-gray-300">
-                    {row.sellers.length ? row.sellers.join(", ") : "—"}
+                    {investorDetails(row.sellers, "sell")}
                   </td>
                   <td className={`px-4 py-3 text-center font-semibold ${net > 0 ? "text-emerald-300" : net < 0 ? "text-red-300" : "text-gray-400"}`}>
                     {net > 0 ? `+${net}` : net}
@@ -352,6 +428,7 @@ export default function GurusPage() {
   const [gurus, setGurus] = useState<GuruProfile[]>([]);
   const [consensus, setConsensus] = useState<ConsensusResponse | null>(null);
   const [view, setView] = useState<"portfolios" | "activity">("portfolios");
+  const [selectedInvestorId, setSelectedInvestorId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -374,6 +451,11 @@ export default function GurusPage() {
             return response.json() as Promise<GuruProfile>;
           }),
         );
+        const requestedInvestorId = new URLSearchParams(window.location.search).get("investor");
+        if (requestedInvestorId) {
+          setSelectedInvestorId(requestedInvestorId);
+          setView("portfolios");
+        }
         setGurus(full);
         setConsensus(consensusData);
       } catch (loadError) {
@@ -436,7 +518,7 @@ export default function GurusPage() {
             <ConsensusView data={consensus} />
           ) : (
             <div className="space-y-4">
-              {gurus.map((g) => <GuruCard key={g.id} guru={g} />)}
+              {gurus.map((g) => <GuruCard key={g.id} guru={g} initiallyExpanded={g.id === selectedInvestorId} />)}
             </div>
           )}
         </div>

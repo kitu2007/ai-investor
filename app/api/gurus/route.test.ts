@@ -95,6 +95,16 @@ describe("guru portfolio API", () => {
     expect(payload.methodology).toContain("share-count changes");
     expect(payload.rows[0].net).toBeGreaterThanOrEqual(payload.rows[1].net);
     expect(amazon.buyers).toHaveLength(3);
-    expect(amazon.sellers).toHaveLength(3);
+    expect(amazon.sellers).toHaveLength(2);
+    expect(amazon.buyers[0]).toEqual(
+      expect.objectContaining({
+        investorId: expect.any(String),
+        investorName: expect.any(String),
+        action: expect.any(String),
+        currentPctPortfolio: expect.any(Number),
+        quarterReported: "Q2 2026 vs Q1 2026",
+      }),
+    );
+    expect(amazon.buyers.some((buyer: { approximatePrice?: string }) => buyer.approximatePrice?.startsWith("~$"))).toBe(true);
   });
 });
