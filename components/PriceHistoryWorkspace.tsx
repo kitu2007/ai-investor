@@ -506,12 +506,12 @@ export default function PriceHistoryWorkspace({ initialTicker = "NVDA" }: { init
                 {companyContext.sector ? <p className="mt-1 text-[11px] text-gray-500">Sector: {companyContext.sector}</p> : null}
               </div>
               <a
-                href={`https://finance.yahoo.com/quote/${encodeURIComponent(companyContext.ticker)}`}
+                href={`https://www.tradingview.com/symbols/${encodeURIComponent(companyContext.ticker)}/`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 text-xs text-blue-300 underline underline-offset-2"
               >
-                Yahoo Finance <ExternalLink size={12} />
+                TradingView chart <ExternalLink size={12} />
               </a>
             </div>
           </section>

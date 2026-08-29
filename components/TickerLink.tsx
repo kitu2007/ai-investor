@@ -49,10 +49,10 @@ export default function TickerLink({ ticker, className, size = "xs" }: Props) {
         Research
       </Link>
       <a
-        href={`https://finance.yahoo.com/quote/${encodedTicker}`}
+        href={`https://www.tradingview.com/symbols/${encodedTicker}/`}
         target="_blank"
         rel="noreferrer"
-        title={`Open ${normalizedTicker} on Yahoo Finance`}
+        title={`Open ${normalizedTicker} chart on TradingView`}
         className="text-gray-500 transition-colors hover:text-blue-300"
       >
         ↗

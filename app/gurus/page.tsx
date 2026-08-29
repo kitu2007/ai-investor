@@ -16,6 +16,9 @@ interface GuruHolding {
   action: "New" | "Add" | "Reduce" | "Hold" | "Exit";
   quarterReported: string;
   notes: string;
+  reportingPeriodEnd?: string;
+  approximatePrice?: string;
+  priceBasis?: string;
 }
 
 interface GuruMove {
@@ -108,6 +111,16 @@ function formatShares(millions: number) {
   return `${(millions * 1000).toFixed(1)}K`;
 }
 
+function formatReportingDate(date: string | undefined) {
+  if (!date) return "date unavailable";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${date}T00:00:00.000Z`));
+}
+
 function formatChangePct(value: number | null) {
   if (value == null) return "new";
   const sign = value > 0 ? "+" : "";
@@ -195,6 +208,7 @@ function GuruCard({ guru, initiallyExpanded = false }: { guru: GuruProfile; init
                   <th className="px-4 py-2.5 text-left text-gray-400 font-medium">Sector</th>
                   <th className="px-4 py-2.5 text-left text-gray-400 font-medium w-40">% Portfolio</th>
                   <th className="px-4 py-2.5 text-right text-gray-400 font-medium">Value</th>
+                  <th className="px-4 py-2.5 text-right text-gray-400 font-medium">As reported / price context</th>
                   <th className="px-4 py-2.5 text-center text-gray-400 font-medium">Action</th>
                   <th className="px-4 py-2.5 text-left text-gray-400 font-medium">Notes</th>
                 </tr>
@@ -212,6 +226,10 @@ function GuruCard({ guru, initiallyExpanded = false }: { guru: GuruProfile; init
                     </td>
                     <td className="px-4 py-3 text-right text-gray-300">
                       {h.valueB != null ? `$${h.valueB.toFixed(2)}B` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right text-[11px] leading-5 text-gray-400">
+                      <div>{h.quarterReported} · {formatReportingDate(h.reportingPeriodEnd)}</div>
+                      <div title={h.priceBasis} className="text-gray-500">{h.approximatePrice ?? "price n/a"} at period end</div>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${ACTION_STYLE[h.action]}`}>

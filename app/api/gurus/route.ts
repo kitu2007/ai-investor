@@ -15,6 +15,9 @@ export interface GuruHolding {
   action: "New" | "Add" | "Reduce" | "Hold" | "Exit";
   quarterReported: string; // e.g. "Q4 2024"
   notes: string;
+  reportingPeriodEnd?: string;
+  approximatePrice?: string;
+  priceBasis?: string;
 }
 
 export interface GuruMove {
@@ -75,11 +78,22 @@ function approximateQuarterEndPrice(valueB: number | null, sharesM: number | nul
   return `~$${((valueB / sharesM) * 1000).toFixed(0)}`;
 }
 
+function quarterEndDate(period: string): string | undefined {
+  const match = /Q([1-4])\s+(\d{4})/.exec(period);
+  if (!match) return undefined;
+  const monthDay = ["03-31", "06-30", "09-30", "12-31"][Number(match[1]) - 1];
+  return `${match[2]}-${monthDay}`;
+}
+
 function priceBasis(action: GuruMove["action"]): string {
   if (action === "New" || action === "Add") {
     return "Approximate Q2 2026 quarter-end price, not the investor's execution price.";
   }
   return "Approximate Q2 2026 remaining-position quarter-end price, not the investor's sale price.";
+}
+
+function holdingPriceBasis(): string {
+  return "Approximate quarter-end market price implied by the disclosed 13-F value divided by shares. It is not a purchase price, cost basis, or execution price.";
 }
 
 const secHolding = (
@@ -571,11 +585,22 @@ export const GURU_PORTFOLIOS: GuruProfile[] = [
   },
 ];
 
-export function withMovePriceContext(guru: GuruProfile): GuruProfile {
+export function withFilingContext(guru: GuruProfile): GuruProfile {
+  const holdings = guru.holdings.map((holding) => {
+    const approximatePrice = approximateQuarterEndPrice(holding.valueB, holding.sharesM);
+    return {
+      ...holding,
+      reportingPeriodEnd: quarterEndDate(holding.quarterReported),
+      approximatePrice,
+      priceBasis: approximatePrice
+        ? holdingPriceBasis()
+        : "No quarter-end price approximation is available for this holding.",
+    };
+  });
   const holdingsByCusip = new Map(
-    guru.holdings.flatMap((holding) => (holding.cusip ? [[holding.cusip, holding]] : [])),
+    holdings.flatMap((holding) => (holding.cusip ? [[holding.cusip, holding]] : [])),
   );
-  const holdingsByTicker = new Map(guru.holdings.map((holding) => [holding.ticker, holding]));
+  const holdingsByTicker = new Map(holdings.map((holding) => [holding.ticker, holding]));
   const recentMoves = guru.recentMoves?.map((move) => {
     const holding = holdingsByCusip.get(move.cusip) ?? holdingsByTicker.get(move.ticker);
     const approximatePrice = approximateQuarterEndPrice(
@@ -588,7 +613,7 @@ export function withMovePriceContext(guru: GuruProfile): GuruProfile {
       priceBasis: approximatePrice ? priceBasis(move.action) : "No quarter-end price approximation is available for this move.",
     };
   });
-  return { ...guru, recentMoves };
+  return { ...guru, holdings, recentMoves };
 }
 
 function shareChangePct(move: GuruMove): number | null {
@@ -615,7 +640,7 @@ export function buildConsensusActivity(): ConsensusActivity[] {
   };
 
   for (const rawGuru of GURU_PORTFOLIOS) {
-    const guru = withMovePriceContext(rawGuru);
+    const guru = withFilingContext(rawGuru);
     for (const move of guru.recentMoves ?? []) {
       if (!CONSENSUS_CUSIPS.has(move.cusip)) continue;
       const investorMove: ConsensusInvestorMove = {
@@ -662,7 +687,7 @@ export async function GET(req: NextRequest) {
   if (id) {
     const guru = GURU_PORTFOLIOS.find((g) => g.id === id);
     if (!guru) return NextResponse.json({ error: "not found" }, { status: 404 });
-    return NextResponse.json(withMovePriceContext(guru));
+    return NextResponse.json(withFilingContext(guru));
   }
   return NextResponse.json(
     GURU_PORTFOLIOS.map(

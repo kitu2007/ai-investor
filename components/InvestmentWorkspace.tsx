@@ -1584,12 +1584,12 @@ export default function InvestmentWorkspace({ initialTicker = "AAPL" }: { initia
                     {companyContext.sector ? <p className="mt-1 text-[11px] text-gray-500">Sector: {companyContext.sector}</p> : null}
                   </div>
                   <a
-                    href={`https://finance.yahoo.com/quote/${encodeURIComponent(companyContext.ticker)}`}
+                    href={`https://www.tradingview.com/symbols/${encodeURIComponent(companyContext.ticker)}/`}
                     target="_blank"
                     rel="noreferrer"
                     className="text-xs text-blue-300 underline underline-offset-2"
                   >
-                    Yahoo Finance
+                    TradingView chart
                   </a>
                 </div>
               </div>
