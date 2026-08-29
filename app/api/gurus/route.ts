@@ -138,7 +138,7 @@ const CONSENSUS_CUSIPS = new Set([
   "92840M102", "958102105",
 ]);
 
-const GURU_PORTFOLIOS: GuruProfile[] = [
+export const GURU_PORTFOLIOS: GuruProfile[] = [
   {
     id: "warren-buffett",
     name: "Warren Buffett",
@@ -571,7 +571,7 @@ const GURU_PORTFOLIOS: GuruProfile[] = [
   },
 ];
 
-function withMovePriceContext(guru: GuruProfile): GuruProfile {
+export function withMovePriceContext(guru: GuruProfile): GuruProfile {
   const holdingsByCusip = new Map(
     guru.holdings.flatMap((holding) => (holding.cusip ? [[holding.cusip, holding]] : [])),
   );
@@ -596,7 +596,7 @@ function shareChangePct(move: GuruMove): number | null {
   return ((move.currentSharesM - move.priorSharesM) / move.priorSharesM) * 100;
 }
 
-function buildConsensusActivity(): ConsensusActivity[] {
+export function buildConsensusActivity(): ConsensusActivity[] {
   const rows = new Map<string, ConsensusActivity>();
 
   const ensureRow = (move: GuruMove) => {

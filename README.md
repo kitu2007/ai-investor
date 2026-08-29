@@ -47,6 +47,10 @@ share counts between consecutive quarters and counts how many included managers 
 or exited each material position. It uses Stockcircle only to discover relevant manager names; the displayed
 holdings and activity come from SEC filings. This is delayed disclosure, not a real-time trade feed or a
 substitute for company research. See [docs/value-investor-activity.md](docs/value-investor-activity.md).
+The page also links a Google-Sheets-ready workbook at
+[`public/sheets/value-investor-holdings.xlsx`](public/sheets/value-investor-holdings.xlsx). Import it into
+Google Sheets to activate its `GOOGLEFINANCE` price and P/E formulas. Average unit cost is intentionally
+blank/manual because 13-F filings do not disclose a manager's true cost basis.
 
 The separate **Growth Investors** workspace tracks five active and distinct growth styles: ARK, Tiger Global,
 Dorsey Asset Management, Fundsmith, and Polen Capital. Each profile shows a dated SEC filing, its ten largest

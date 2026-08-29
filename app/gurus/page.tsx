@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDownRight, ArrowUpRight, ChevronDown, ChevronUp, Users } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, ChevronDown, ChevronUp, FileSpreadsheet, Users } from "lucide-react";
 import NavShell from "@/components/NavShell";
 import TickerLink from "@/components/TickerLink";
 
@@ -478,18 +478,27 @@ export default function GurusPage() {
     <NavShell active="gurus">
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center gap-3 mb-6">
-            <Users size={20} className="text-purple-400" />
-            <div>
-              <h2 className="text-lg font-bold text-white">Value Investor Portfolios</h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Latest disclosed holdings from 13-F filings and annual reports. Click any card to expand.
-                <span className="ml-2 text-yellow-600">⚠ Holdings are delayed point-in-time snapshots and may have changed.</span>
-              </p>
-              <p className="text-[11px] text-gray-600 mt-1">
-                13-F reports omit cash, private holdings, most bonds, ordinary short positions, and many derivatives; they do not disclose an investor&apos;s thesis.
-              </p>
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Users size={20} className="text-purple-400" />
+              <div>
+                <h2 className="text-lg font-bold text-white">Value Investor Portfolios</h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Latest disclosed holdings from 13-F filings and annual reports. Click any card to expand.
+                  <span className="ml-2 text-yellow-600">⚠ Holdings are delayed point-in-time snapshots and may have changed.</span>
+                </p>
+                <p className="text-[11px] text-gray-600 mt-1">
+                  13-F reports omit cash, private holdings, most bonds, ordinary short positions, and many derivatives; they do not disclose an investor&apos;s thesis.
+                </p>
+              </div>
             </div>
+            <a
+              href="/sheets/value-investor-holdings.xlsx"
+              className="inline-flex items-center gap-2 rounded-lg border border-purple-700 bg-purple-950/50 px-3 py-2 text-xs font-medium text-purple-200 hover:border-purple-500 hover:bg-purple-900/60"
+            >
+              <FileSpreadsheet size={14} />
+              Download Google Sheets workbook
+            </a>
           </div>
 
           <div className="mb-5 flex gap-2 border-b border-gray-800 pb-3">
