@@ -49,6 +49,7 @@ import type {
 import IndependentCouncilPanel from "@/components/IndependentCouncilPanel";
 import PrivatePortfolioPanel from "@/components/PrivatePortfolioPanel";
 import ValuationLab from "@/components/ValuationLab";
+import { companyContextForTicker } from "@/lib/company-context";
 
 type Message = {
   role: "user" | "assistant";
@@ -62,6 +63,11 @@ type Message = {
 function defaultResearchQuestion(ticker: string): string {
   const subject = ticker.trim().toUpperCase() || "<TICKER>";
   return `Is ${subject}'s valuation justified by its growth, and what evidence would invalidate the thesis?`;
+}
+
+function initialTickerFromUrl(defaultTicker = "AAPL") {
+  if (typeof window === "undefined") return defaultTicker;
+  return new URLSearchParams(window.location.search).get("ticker")?.trim().toUpperCase() || defaultTicker;
 }
 
 function percent(value: number | null | undefined, digits = 1): string {
@@ -1106,7 +1112,7 @@ function CompanyPanel({
 }
 
 export default function InvestmentWorkspace() {
-  const [ticker, setTicker] = useState("AAPL");
+  const [ticker, setTicker] = useState(() => initialTickerFromUrl());
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [analysis, setAnalysis] = useState<TechnicalAnalysis | null>(null);
@@ -1132,6 +1138,7 @@ export default function InvestmentWorkspace() {
   const [error, setError] = useState("");
 
   const normalizedTicker = useMemo(() => ticker.trim().toUpperCase(), [ticker]);
+  const companyContext = useMemo(() => companyContextForTicker(normalizedTicker), [normalizedTicker]);
   const researchActive = Boolean(
     researchRun && ["queued", "running"].includes(researchRun.status),
   );
@@ -1142,6 +1149,9 @@ export default function InvestmentWorkspace() {
   function updateTicker(value: string) {
     const nextTicker = value.toUpperCase().replace(/[^A-Z.-]/g, "").slice(0, 16);
     setTicker(nextTicker);
+    if (nextTicker) {
+      window.history.replaceState(null, "", `/research?ticker=${encodeURIComponent(nextTicker)}`);
+    }
     setMessages([]);
     setQuickAnswerId(null);
     setQuickAnswerLoading(false);
@@ -1562,6 +1572,28 @@ export default function InvestmentWorkspace() {
 
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            {companyContext ? (
+              <div className="mx-auto mb-4 max-w-3xl rounded-2xl border border-blue-400/15 bg-blue-400/[0.06] p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-sm font-semibold text-blue-100">
+                      {companyContext.ticker} · {companyContext.name}
+                    </h2>
+                    <p className="mt-1 max-w-3xl text-xs leading-5 text-gray-300">{companyContext.description}</p>
+                    {companyContext.sector ? <p className="mt-1 text-[11px] text-gray-500">Sector: {companyContext.sector}</p> : null}
+                  </div>
+                  <a
+                    href={`https://finance.yahoo.com/quote/${encodeURIComponent(companyContext.ticker)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-300 underline underline-offset-2"
+                  >
+                    Yahoo Finance
+                  </a>
+                </div>
+              </div>
+            ) : null}
+
             {messages.length === 0 ? (
               <div className="grid h-full place-items-center">
                 <div className="max-w-xl text-center">

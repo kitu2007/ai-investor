@@ -35,6 +35,7 @@ import {
   type ForwardEstimatePeriod,
   type ForwardEstimatesResponse,
 } from "@/lib/forward-estimates";
+import { companyContextForTicker } from "@/lib/company-context";
 import type {
   AnnualFinancialMetric,
   AnnualFinancialStatement,
@@ -52,6 +53,11 @@ const TREND_COLORS = [
   "#fbbf24",
   "#fb7185",
 ];
+
+function initialTickerFromUrl(defaultTicker = "NVDA") {
+  if (typeof window === "undefined") return defaultTicker;
+  return new URLSearchParams(window.location.search).get("ticker")?.trim().toUpperCase() || defaultTicker;
+}
 
 async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init);
@@ -668,7 +674,7 @@ function storedFinancialPreferences(raw: string | null): StoredFinancialPreferen
 }
 
 export default function FinancialStatementsWorkspace() {
-  const [ticker, setTicker] = useState("NVDA");
+  const [ticker, setTicker] = useState(() => initialTickerFromUrl());
   const [years, setYears] = useState(10);
   const [scale, setScale] = useState<Scale>("billions");
   const [activeStatement, setActiveStatement] = useState<StatementKey>("income");
@@ -750,12 +756,13 @@ export default function FinancialStatementsWorkspace() {
   }
 
   useEffect(() => {
+    const initialTicker = initialTickerFromUrl();
     let active = true;
     void Promise.all([
       jsonRequest<FinancialStatementDashboard>(
-        "/api/investment-os/financial-statements?ticker=NVDA&years=10",
+        `/api/investment-os/financial-statements?ticker=${encodeURIComponent(initialTicker)}&years=10`,
       ),
-      optionalForwardEstimates("NVDA"),
+      optionalForwardEstimates(initialTicker),
     ])
       .then(([result, forward]) => {
         if (!active) return;
@@ -812,9 +819,14 @@ export default function FinancialStatementsWorkspace() {
         .find((metric) => metric)?.value_kind ?? null,
     [dashboard, trendMetricKeys],
   );
+  const companyContext = useMemo(() => companyContextForTicker(ticker), [ticker]);
 
   function submitTicker(event: FormEvent) {
     event.preventDefault();
+    const normalized = ticker.trim().toUpperCase();
+    if (normalized) {
+      window.history.replaceState(null, "", `/financials?ticker=${encodeURIComponent(normalized)}`);
+    }
     void loadDashboard(ticker, years);
   }
 
@@ -932,6 +944,28 @@ export default function FinancialStatementsWorkspace() {
       </header>
 
       <div className="mx-auto max-w-[1500px] space-y-5 p-6">
+        {companyContext ? (
+          <section className="rounded-xl border border-blue-400/15 bg-blue-400/[0.06] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-blue-100">
+                  {companyContext.ticker} · {companyContext.name}
+                </h2>
+                <p className="mt-1 max-w-4xl text-xs leading-5 text-gray-300">{companyContext.description}</p>
+                {companyContext.sector ? <p className="mt-1 text-[11px] text-gray-500">Sector: {companyContext.sector}</p> : null}
+              </div>
+              <a
+                href={`https://finance.yahoo.com/quote/${encodeURIComponent(companyContext.ticker)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-blue-300 underline underline-offset-2"
+              >
+                Yahoo Finance <ExternalLink size={12} />
+              </a>
+            </div>
+          </section>
+        ) : null}
+
         {error ? (
           <div className="flex items-start justify-between gap-4 rounded-xl border border-rose-400/20 bg-rose-400/[0.06] p-4 text-xs text-rose-200">
             <span className="flex items-start gap-2">

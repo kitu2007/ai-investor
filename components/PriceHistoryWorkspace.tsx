@@ -26,6 +26,7 @@ import {
   type PriceHistoryResponse,
   type PriceScale,
 } from "@/lib/price-history";
+import { companyContextForTicker } from "@/lib/company-context";
 
 const RANGE_LABELS: Record<PriceHistoryRange, string> = {
   all: "All",
@@ -45,6 +46,11 @@ const CHART = {
   top: 22,
   bottom: 38,
 };
+
+function initialTickerFromUrl(defaultTicker = "NVDA") {
+  if (typeof window === "undefined") return defaultTicker;
+  return new URLSearchParams(window.location.search).get("ticker")?.trim().toUpperCase() || defaultTicker;
+}
 
 function dateValue(date: string): number {
   return new Date(`${date}T00:00:00.000Z`).getTime();
@@ -392,7 +398,7 @@ async function jsonRequest<T>(url: string): Promise<T> {
 }
 
 export default function PriceHistoryWorkspace() {
-  const [ticker, setTicker] = useState("NVDA");
+  const [ticker, setTicker] = useState(() => initialTickerFromUrl());
   const [range, setRange] = useState<PriceHistoryRange>("10y");
   const [scale, setScale] = useState<PriceScale>("linear");
   const [data, setData] = useState<PriceHistoryResponse | null>(null);
@@ -426,22 +432,31 @@ export default function PriceHistoryWorkspace() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => void loadHistory("NVDA", "10y"), 0);
+    const timer = window.setTimeout(() => void loadHistory(initialTickerFromUrl(), "10y"), 0);
     return () => window.clearTimeout(timer);
   }, [loadHistory]);
 
   function submitTicker(event: FormEvent) {
     event.preventDefault();
+    const normalized = ticker.trim().toUpperCase();
+    if (normalized) {
+      window.history.replaceState(null, "", `/prices?ticker=${encodeURIComponent(normalized)}`);
+    }
     void loadHistory(ticker, range);
   }
 
   function chooseRange(nextRange: PriceHistoryRange) {
     setRange(nextRange);
+    const normalized = ticker.trim().toUpperCase();
+    if (normalized) {
+      window.history.replaceState(null, "", `/prices?ticker=${encodeURIComponent(normalized)}`);
+    }
     void loadHistory(ticker, nextRange);
   }
 
   const summary = data?.summary;
   const loadedRange = data ? RANGE_LABELS[data.range] : RANGE_LABELS[range];
+  const companyContext = companyContextForTicker(ticker);
 
   return (
     <main className="min-w-0 flex-1 overflow-y-auto bg-gray-950">
@@ -482,6 +497,28 @@ export default function PriceHistoryWorkspace() {
       </header>
 
       <div className="mx-auto max-w-[1500px] space-y-5 px-6 py-5">
+        {companyContext ? (
+          <section className="rounded-xl border border-blue-400/15 bg-blue-400/[0.06] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-blue-100">
+                  {companyContext.ticker} · {companyContext.name}
+                </h2>
+                <p className="mt-1 max-w-4xl text-xs leading-5 text-gray-300">{companyContext.description}</p>
+                {companyContext.sector ? <p className="mt-1 text-[11px] text-gray-500">Sector: {companyContext.sector}</p> : null}
+              </div>
+              <a
+                href={`https://finance.yahoo.com/quote/${encodeURIComponent(companyContext.ticker)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-blue-300 underline underline-offset-2"
+              >
+                Yahoo Finance <ExternalLink size={12} />
+              </a>
+            </div>
+          </section>
+        ) : null}
+
         <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-800 bg-gray-900/40 px-4 py-3">
           <div className="flex flex-wrap items-center gap-1.5" aria-label="Price history range">
             {PRICE_HISTORY_RANGES.map((item) => (
