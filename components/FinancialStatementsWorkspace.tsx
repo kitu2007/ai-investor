@@ -54,11 +54,6 @@ const TREND_COLORS = [
   "#fb7185",
 ];
 
-function initialTickerFromUrl(defaultTicker = "NVDA") {
-  if (typeof window === "undefined") return defaultTicker;
-  return new URLSearchParams(window.location.search).get("ticker")?.trim().toUpperCase() || defaultTicker;
-}
-
 async function jsonRequest<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init);
   const body = (await response.json()) as T & { error?: string };
@@ -673,8 +668,11 @@ function storedFinancialPreferences(raw: string | null): StoredFinancialPreferen
   }
 }
 
-export default function FinancialStatementsWorkspace() {
-  const [ticker, setTicker] = useState(() => initialTickerFromUrl());
+export default function FinancialStatementsWorkspace({ initialTicker = "NVDA" }: { initialTicker?: string }) {
+  // The page supplies this value during server rendering. Reading window.location
+  // here made the server render NVDA while the browser rendered the URL ticker,
+  // which caused a hydration mismatch on direct ticker links.
+  const [ticker, setTicker] = useState(initialTicker);
   const [years, setYears] = useState(10);
   const [scale, setScale] = useState<Scale>("billions");
   const [activeStatement, setActiveStatement] = useState<StatementKey>("income");
@@ -756,8 +754,8 @@ export default function FinancialStatementsWorkspace() {
   }
 
   useEffect(() => {
-    const initialTicker = initialTickerFromUrl();
     let active = true;
+    setTicker(initialTicker);
     void Promise.all([
       jsonRequest<FinancialStatementDashboard>(
         `/api/investment-os/financial-statements?ticker=${encodeURIComponent(initialTicker)}&years=10`,
@@ -786,7 +784,7 @@ export default function FinancialStatementsWorkspace() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialTicker]);
 
   const selectedStatement = useMemo(
     () => dashboard?.statements.find((item) => item.key === activeStatement) ?? null,

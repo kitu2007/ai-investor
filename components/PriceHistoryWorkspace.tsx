@@ -47,11 +47,6 @@ const CHART = {
   bottom: 38,
 };
 
-function initialTickerFromUrl(defaultTicker = "NVDA") {
-  if (typeof window === "undefined") return defaultTicker;
-  return new URLSearchParams(window.location.search).get("ticker")?.trim().toUpperCase() || defaultTicker;
-}
-
 function dateValue(date: string): number {
   return new Date(`${date}T00:00:00.000Z`).getTime();
 }
@@ -397,8 +392,10 @@ async function jsonRequest<T>(url: string): Promise<T> {
   return body;
 }
 
-export default function PriceHistoryWorkspace() {
-  const [ticker, setTicker] = useState(() => initialTickerFromUrl());
+export default function PriceHistoryWorkspace({ initialTicker = "NVDA" }: { initialTicker?: string }) {
+  // This is supplied by the server page so server and client render the same
+  // first ticker for a direct /prices?ticker=... link.
+  const [ticker, setTicker] = useState(initialTicker);
   const [range, setRange] = useState<PriceHistoryRange>("10y");
   const [scale, setScale] = useState<PriceScale>("linear");
   const [data, setData] = useState<PriceHistoryResponse | null>(null);
@@ -432,9 +429,10 @@ export default function PriceHistoryWorkspace() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => void loadHistory(initialTickerFromUrl(), "10y"), 0);
+    setTicker(initialTicker);
+    const timer = window.setTimeout(() => void loadHistory(initialTicker, "10y"), 0);
     return () => window.clearTimeout(timer);
-  }, [loadHistory]);
+  }, [initialTicker, loadHistory]);
 
   function submitTicker(event: FormEvent) {
     event.preventDefault();

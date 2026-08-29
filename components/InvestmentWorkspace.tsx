@@ -65,11 +65,6 @@ function defaultResearchQuestion(ticker: string): string {
   return `Is ${subject}'s valuation justified by its growth, and what evidence would invalidate the thesis?`;
 }
 
-function initialTickerFromUrl(defaultTicker = "AAPL") {
-  if (typeof window === "undefined") return defaultTicker;
-  return new URLSearchParams(window.location.search).get("ticker")?.trim().toUpperCase() || defaultTicker;
-}
-
 function percent(value: number | null | undefined, digits = 1): string {
   return value == null ? "—" : (value * 100).toFixed(digits) + "%";
 }
@@ -1111,8 +1106,10 @@ function CompanyPanel({
   );
 }
 
-export default function InvestmentWorkspace() {
-  const [ticker, setTicker] = useState(() => initialTickerFromUrl());
+export default function InvestmentWorkspace({ initialTicker = "AAPL" }: { initialTicker?: string }) {
+  // Receive the ticker from the server route rather than reading window.location
+  // during render, keeping direct research links hydration-safe.
+  const [ticker, setTicker] = useState(initialTicker);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [analysis, setAnalysis] = useState<TechnicalAnalysis | null>(null);
@@ -1136,6 +1133,10 @@ export default function InvestmentWorkspace() {
   const [followUpCancelLoading, setFollowUpCancelLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    setTicker(initialTicker);
+  }, [initialTicker]);
 
   const normalizedTicker = useMemo(() => ticker.trim().toUpperCase(), [ticker]);
   const companyContext = useMemo(() => companyContextForTicker(normalizedTicker), [normalizedTicker]);
