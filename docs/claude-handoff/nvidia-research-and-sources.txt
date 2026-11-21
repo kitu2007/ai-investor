@@ -1,0 +1,580 @@
+# Nvidia demand, supply constraints, and valuation — November 2026
+
+Prepared November 21, 2026 · Financial evidence through October 25, 2026; subsequent policy and legal developments through November 20. Price reference: November 20 regular-session close. USD unless stated.
+
+## Executive Summary
+
+**Hold or watch at $125.53. A purchase near $95 would provide a 20% discount to the $118 cash-flow estimate.** A normal earnings recovery supports a November 2027 target of $186, but the bearish case reaches $74. The distinction matters. A buyer at today’s price can make money if investors continue to capitalize fiscal 2028 earnings. A long-term owner also needs those earnings to turn into cash after the customer base has been financed. The closing price fell 14.0% on November 20, 22.9% from November 13 and 38.7% from October 30. A rebound or a further selloff could precede evidence on collections. [Daily closes](https://www.quiverquant.com/stock/NVDA/historical-prices/).
+
+**Management’s forecast remains strong after its initial assessment of the new export controls:** approximately 75% revenue growth in fiscal 2028, with gross margin of 72–73%. Management was still studying the rules. Micron and TSMC also describe substantial supply pressure. The evidence supports a near-term shipment ceiling, while leaving the size of the post-control demand cushion undisclosed. (2. See [2] Demand, allocation, and management guidance below.) (3. See [3] Manufacturing and component constraints below.)
+
+**The cash test is more demanding than the earnings test.** At 14×, the closing price requires about $8.97 of FY2028 EPS. The five-year cash model needs a 44.8% terminal operating margin to support the same price at 10% discount and 3.5% perpetual growth, compared with the modeled 42%. See the operating and cash assumptions below.
+
+**Where new capital looks better.** TSMC at $318.71 offers about 19% normal upside with a $214 bearish case. It can collect manufacturing and advanced-packaging revenue on GPUs and on chips designed by the hyperscalers. All seven company models and financial statements are in the Investment OS report on this computer (see the included HTML report).
+
+## 1. Current demand is substantial; disclosed backlog is incomplete
+
+The most useful starting point is shipments and revenue, followed by customer deployment plans. Nvidia’s total quarterly revenue was $115.8 billion; Data Center accounted for $107.6 billion. Revenue attributed to direct customers headquartered in the United States was $72.9 billion, or about 63% of the total. Customer headquarters do not establish installation location, and purchases through foreign manufacturers can serve American end customers. (1. See [1] Reported results and annual revenue bridge below.)
+
+| Demand evidence | Latest disclosed figure or plan | What it supports |
+|---|---|---|
+| Hyperscale sales | $60.1B in Q3; +71% year over year | Major cloud customers are still increasing purchases |
+| AI Clouds, Industrial & Enterprise | $47.5B; +195% year over year | Growth extends beyond hyperscalers; this category is broader than neoclouds |
+| AWS Nvidia deployment | Two million additional GPUs in 2027–2028, beyond its earlier million-plus plan | Specific multiyear demand from an American company, across its global infrastructure |
+| Meta partnership | Millions of Blackwell/Rubin GPUs over multiple generations | Large announced deployment; annual quantities and contract economics undisclosed |
+| CoreWeave service backlog | $132.5B | Contracted cloud demand; conditional on service delivery, not Nvidia chip orders |
+
+(View demand and customer evidence. See [5] American customer demand and deployment plans below.) · (Management segment disclosures. See [2] Demand, allocation, and management guidance below.)
+
+Customers’ investment budgets also support ongoing infrastructure demand. Amazon guides to about $220B of 2026 cash capex; Alphabet $195–205B; Microsoft about $170B of calendar-year capex; Meta $135–145B including finance-lease principal payments. These accounting conventions differ, and the budgets fund buildings, networking, CPUs, custom chips and other assets. They are not a measure of Nvidia’s addressable revenue. Alphabet expects significantly higher capex in 2027; Microsoft reported delays in some third-party capacity. (5. See [5] American customer demand and deployment plans below.)
+
+**Backlog conclusion:** no complete, noncancelable U.S.-customer GPU backlog through 2029 was identified. The last filed Q2 10-Q disclosed only $3.2B of remaining performance obligations on contracts longer than one year; that narrow accounting disclosure is not the whole hardware order book. Equally, Nvidia’s procurement commitments are not customer backlog. The Q3 earnings materials said its 10-Q was still forthcoming. (2. See [2] Demand, allocation, and management guidance below.)
+
+## 2. Supply remains binding, but it is more than a wafer shortage
+
+The evidence is strongest when Nvidia’s position is checked against its suppliers. Micron says most of its calendar 2027 HBM bit supply is already covered by agreements, with substantial price increases, and expects tighter memory conditions in 2027–2028. TSMC describes a sizable demand/supply gap and is investing $60–64B in 2026. These are supplier-wide statements, not a promise of a specific number of Nvidia GPUs. (3. See [3] Manufacturing and component constraints below.)
+
+| Constraint | Evidence or dependency | Effect on the forecast |
+|---|---|---|
+| Leading-edge wafers | TSMC demand exceeds available supply | More orders do not immediately create more finished accelerators |
+| HBM and substrates | Nvidia is committing more to inputs; Micron has contracted most 2027 HBM supply | Can limit shipments and raise unit cost |
+| Packaging and system integration | Nvidia is expanding its supplier network | Secured components still must become qualified, working systems |
+| Powered data-center space | A customer must have a usable site | Available hardware can coexist with delayed deployments |
+| Customer capital and offtake | Allocation considers financing and readiness | An announced project may not qualify for near-term allocation |
+
+(View source. See [3] Manufacturing and component constraints below.) · (Allocation criteria. See [2] Demand, allocation, and management guidance below.)
+
+Nvidia’s $390B supply/capacity commitments, up from $279B, are a strong statement of production intent. About $203B falls in FY2028 and $92B in FY2029. They also increase exposure if demand disappoints; they cannot be converted into shipment revenue without product costs, mix and timing. (3. See [3] Manufacturing and component constraints below.)
+
+**Assessment:** the public evidence favors a manufacturing and deployment constraint over a present shortage of customer interest. However, supplier shortages do not prove that every Nvidia product remains oversubscribed after every regulatory shock. No reviewed disclosure provides a SKU-level production ceiling, binding customer orders and cancellation terms covering the same future periods.
+
+## 3. Policy can reduce eligible demand or delay otherwise viable buyers
+
+| Development | Status at the evidence cutoff | Transmission to Nvidia |
+|---|---|---|
+| Direct China compute exposure | Next-quarter guidance assumes no China Data Center compute revenue | Direct sales upside is excluded from that guide; indirect cloud exposure remains a separate question |
+| Remote access to restricted entities | BIS rule effective November 19; licensing, thresholds and exceptions apply | Cloud operators may lose restricted end-user workloads, reducing future purchases |
+| New York permits | Specified discretionary environmental permits paused for up to a year | Timing and project economics can change; existing operation is not universally prohibited |
+| Texas permits | TCEQ confirms a pause on permits directly supporting data-center infrastructure | A consequential constraint on bringing some new sites online |
+| Overseas data-center statement | November 20 presidential statement; no implementing terms verified in the reviewed release | New uncertainty over relocating American-company projects overseas |
+| Blanket ban on circular financing | No such general prohibition verified | Analyze disclosed contractual conditions and financing availability instead |
+
+(View policy sources and scope. See [6] Export controls and data-center policy below.) · (China guidance and financing disclosures. See [7] Financing, cash conversion, and governance below.)
+
+**The November 20 statement came after Nvidia’s earnings call.** It therefore cannot be assumed to have been incorporated into November 17 guidance. Nor should the speech be modeled as a fully implemented ban with a known financial cost. It could make relocation a less dependable response to domestic permitting delays.
+
+The operating test is straightforward: if demand lost to restrictions can be replaced by another lawful buyer with financing and a ready site, total shipments can remain supply limited. If not, the same policy shock reduces sales. Management’s assessment supports the first outcome near term, but public disclosures do not quantify the available replacement demand. A shortage can absorb some demand loss; its existence alone does not specify how much.
+
+## 4. Custom chips threaten Nvidia’s incremental share and economics
+
+Google and Amazon can expand their own accelerators while also buying more Nvidia GPUs. Alphabet expects a meaningful TPU system-sales ramp in 2027; AWS’s Nvidia deployment plan demonstrates simultaneous demand. The investment consequence is less certainty that each incremental dollar of AI spending flows to Nvidia. (5. See [5] American customer demand and deployment plans below.) (8. See [8] Custom chips and market-share comparability below.)
+
+The updated J.P. Morgan comparison puts Nvidia at 28% of selected announced frontier-lab capacity, measured in GW; the earlier 39% was revised. The historical 80–90% refers to estimated AI-chip revenue share in a different population and period. Neither the capacity figure nor the earlier three-vendor revenue proxy establishes current pure-chip revenue share. This report does not convert one into the other. (8. See [8] Custom chips and market-share comparability below.)
+
+**Current reported revenue comparison.** Nvidia’s $60.1B hyperscale sales were **55.9% of its own $107.6B Data Center revenue** and **51.9% of its $115.844B company revenue**. A limited comparison across three suppliers is **81.0%**, calculated as Nvidia Data Center $107.6B ÷ ($107.6B + AMD Data Center $8.546B + Broadcom AI semiconductor $16.7B). The fiscal quarters ended October 25, September 26 and August 2, respectively. The buckets include some CPUs, networking and system sales, and exclude other suppliers and much internally used silicon. The 81.0% calculation measures relative reported revenue for these three selected buckets. A current marketwide AI-accelerator chip-revenue percentage remains unobservable in these filings. [Nvidia Q3 CFO commentary](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27cfocommentary.htm) · [AMD 10-Q](https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000191/amd-20260926.htm) · [Broadcom Q3 release](https://investors.broadcom.com/news-releases/news-release-details/broadcom-inc-announces-third-quarter-fiscal-year-2026-financial)
+
+**Forecast treatment:** evaluate custom silicon through Nvidia’s realized shipments, pricing and margins. Do not mechanically multiply management’s revenue forecast by 28%, or subtract an additional historical-to-future share loss from it. That would combine incompatible measures. Continued sales growth remains possible; lower pricing power and slower growth after current supply expands are the more useful risks to examine.
+
+## 5. Financing and governance affect the quality of earnings as well as volume
+
+Nvidia’s neocloud arrangements total $32B of contingent commitments. They take effect only after financing, deployment, operation and Nvidia acceptance. Maximum guarantees total $118B, including $105B supporting PORTS-Pike, phased as buildings enter service starting FY2029. These figures are neither additional chip revenue nor certain near-term losses. (7. See [7] Financing, cash conversion, and governance below.)
+
+A financing contraction can remove a buyer before a chip ships. A guarantee can also leave Nvidia exposed after the initial hardware sale. Reallocation to a better-capitalized buyer would preserve some sales, but the replacement buyer may favor its own chips. The combined effect is not disclosed. CoreWeave’s expected customer prepayments provide a counterweight to the claim that all neocloud expansion depends on Nvidia support. (5. See [5] American customer demand and deployment plans below.)
+
+**Cash conversion requires attention.** Q3 operating cash flow was $48.253B against $65.287B of net income. Nvidia reported **$43.777B** of free cash flow after equipment and intangible asset purchases and principal payments. Receivable days increased from 60 to 64, which Nvidia attributes partly to shipment timing and extended terms for investment-grade customers. Inventory growth was concentrated in inputs and work-in-process relative to year-end. [Nvidia’s earnings release](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27pr.htm) · (Financing and cash-flow evidence. See [7] Financing, cash conversion, and governance below.)
+
+Nvidia reported **$113.672B** of nine-month free cash flow. Subtracting $58.100B of equity purchases and adding $9.493B of corresponding sale proceeds yields **$65.065B** before other uses. That $65.065B is an analytical cash-use measure. The valuation model excludes equity gains and holds diluted shares constant. (Financing and cash-flow evidence. See [7] Financing, cash conversion, and governance below.) · (Valuation assumptions. See [4] Valuation assumptions, formulas, and sensitivity below.)
+
+Cash and marketable debt securities were $53.5B against $32.4B of long-term debt. Public and private equity holdings have different liquidity and risk characteristics and should not be treated as cash available to support customers. The guarantees are contingent exposures, not amounts deducted in full as current debt. (7. See [7] Financing, cash conversion, and governance below.)
+
+Nvidia confirmed its CEO transition and a new export-control oversight committee. California’s attorney general announced an investigative subpoena on November 19. Reuters separately reported a federal SEC inquiry into potential accounting issues. An investigation can increase execution and compliance costs and put pressure on the multiple. The sources cited here establish no finding of wrongdoing. [California attorney general](https://oag.ca.gov/node/633133) · (Governance sources. See [7] Financing, cash conversion, and governance below.)
+
+## 6. What company guidance implies—and what it does not
+
+[Chart: Annual revenue and guidance. The corresponding numerical inputs and methodology are in the evidence section below.]
+
+(View source. See [1] Reported results and annual revenue bridge below.)
+
+The FY2027 calculation is $293.681B already reported plus $130B next-quarter guidance. The FY2028 figure is derived arithmetic, not a separately issued dollar target. The approximately 75% growth assumption applied to the Q4 guidance endpoints gives roughly $735–748B; that is not a statistical interval. Relative to 70% growth on the same base, the revised forecast adds about $21.2B of annual revenue. (1. See [1] Reported results and annual revenue bridge below.) (2. See [2] Demand, allocation, and management guidance below.)
+
+Q4 includes an extra week. Its $130B midpoint is about 12.2% above Q3; a simple weekly normalization gives about 4.2%. This helps interpret near-term momentum without mistaking calendar length for demand acceleration. The supplied forecast already requires substantial production expansion—extra supply should not automatically be added again as upside. (1. See [1] Reported results and annual revenue bridge below.)
+
+The major profit qualification is margin: management expects FY2028 gross margin of 72–73%, below Q3’s approximately 75%. A supply shortage can preserve sales and still transfer part of the economics to memory, packaging and other suppliers. For calendar 2028–2029, the report uses stress tests rather than extending 75% growth indefinitely. (2. See [2] Demand, allocation, and management guidance below.) No numerical revenue guidance for FY2029 or FY2030 was identified.
+
+## 7. Nvidia has a $186 normal earnings target and $118 cash value
+
+The November 20 closing price was $125.53. The three November 2027 target prices use normalized earnings for FY2028, which ends in January 2028. The long-term cash-flow valuation is measured in November 2026. [Nvidia market history](https://www.quiverquant.com/stock/NVDA/historical-prices/)
+
+All case inputs below are analyst assumptions. FY2028 ends in January 2028. Valuation on November 20, 2027 uses the then-nearly-completed year’s earnings. Prices exclude dividends. Modeled EPS = (revenue × gross margin − operating expenses) × (1 − tax rate) ÷ diluted shares. The model retains stock compensation in costs and sets net non-operating results to zero, avoiding extrapolation of investment gains.
+
+| FY2028 driver | Bearish | Normal | Best case |
+| --- | --- | --- | --- |
+| Operating path | Credit tightens, deployment slips and inventory provisions compress margin. | New racks ship, some sites move out and custom chips gain share at large buyers. | Buyers fund and energize projects on time, supply scales and Rubin margins recover. |
+| Revenue / growth vs modeled FY2027 | $430B / +1.5% | $635B / +49.9% | $765B / +80.6% |
+| Gross margin / operating expenses | 58% / $52B | 69% / $55B | 73% / $60B |
+| Tax rate / diluted shares | 18% / 24.2B | 17% / 24.0B | 17% / 23.8B |
+| Normalized EPS / exit P/E | $6.69 / 11× | $13.25 / 14× | $17.38 / 19× |
+| **Price / change from $125.53** | **$73.58 / −41.4%** | **$185.51 / +47.8%** | **$330.28 / +163.1%** |
+
+[Company earnings announcement](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27pr.htm) · [FY2028 management outlook](https://s201.q4cdn.com/141608511/files/content_files/NVDA-3Q27-Earnings-Transcript.pdf)
+
+The normal case cuts management’s implied sales by 14.4% and gross margin by 3.5 percentage points versus its midpoint. Annual operating expenses start above the $44B annualized Q4 guide. Lower spending flexibility raises profit risk in the bear case. The assumed 11×, 14× and 19× multiples correspond to earnings yields of 9.1%, 7.1% and 5.3%. They express progressively greater confidence in future earnings durability and cash conversion. Management supplies neither case EPS nor a stock price target. Holding normal opex, taxes and shares constant but substituting management’s revenue and margin outlook gives $16.69 of modeled earnings, or 7.5× at the close. This is the scenario that the earlier low-P/E thesis implicitly needed.
+
+At 14× the close requires $8.97 of FY2028 EPS. Under the normal cost structure, about $455.5B of revenue would produce that price, versus $635B in the normal case. One percentage point of gross margin changes normal EPS by $0.22 and the target by $3.07. At the same EPS, a two-turn P/E change moves the target by $26.50. Expensive supplier obligations, falling margins and a sector-wide contraction in multiples can coincide.
+
+The following grid illustrates the arithmetic of varying EPS and P/E independently. The three dated price targets above govern the investment view.
+
+[Chart: Earnings and multiple sensitivity. The corresponding numerical inputs and methodology are in the evidence section below.]
+
+(View source. See [4] Valuation assumptions, formulas, and sensitivity below.)
+
+## 8. Cash conversion determines long term ownership value
+
+A separate five-year discounted free-cash-flow model tests ownership value as the sector matures. Annual periods end each November to align with the valuation date. The first year includes part of FY2027 before the larger FY2028 ramp. The model assumes competition and capacity growth progressively reduce operating margins to 42%. It deducts net operating reinvestment, including capital expenditure less depreciation and changes in working capital. The separate ecosystem deduction estimates future net economic cash absorbed by partner funding after recovery, rather than expensing every dollar invested. These ratios are assumptions.
+
+| Rolling year ending November | 2027 | 2028 | 2029 | 2030 | 2031 |
+| --- | --- | --- | --- | --- | --- |
+| Revenue, $B | 565 | 665 | 690 | 705 | 720 |
+| Operating margin | 59% | 57% | 51% | 46% | 42% |
+| Net operating reinvestment / revenue | 7.5% | 8.0% | 7.0% | 6.0% | 5.5% |
+| Net ecosystem cash absorption / revenue | 3.0% | 3.0% | 2.5% | 2.0% | 2.0% |
+| Modeled free cash flow to firm, $B | 217.4 | 241.5 | 226.5 | 212.8 | 197.0 |
+
+Free cash flow = revenue × [operating margin × (1 − 17% tax) − reinvestment share − ecosystem cash absorption share]. The 10% discount rate and 3.5% perpetual nominal growth are analyst assumptions. At the fifth year-end, ongoing business value equals year-five cash flow × 1.035 ÷ (0.10 − 0.035). Discount all five annual cash flows and the ongoing business to today. Add $21.14B net cash and marketable debt after debt, and $54.87B for a 50% realization on $109.75B of reported marketable equity and non-marketable securities. Divide by 24.186B latest quarterly diluted weighted-average shares. The portfolio haircut reflects volatility and illiquidity. A move from 50% realization to zero or full carrying value changes the result by about $2.27 a share in either direction. [Balance sheet, investment measurement and share basis](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/supplementalfinancialinfor.htm).
+
+| Current $/share by discount rate | 2.5% perpetual growth | 3.5% | 4.5% |
+| --- | --- | --- | --- |
+| 9% | 122 | 138 | 161 |
+| 10% | 107 | **118** | 134 |
+| 11% | 95 | 104 | 115 |
+
+Roughly 70% of operating value comes from cash beyond year five. To justify $125.53 at the same 10% discount rate with the projected five annual cash flows, perpetual nominal growth must reach 4.01%. Alternatively, fixing perpetual growth at 3.5% and holding years one through four unchanged requires $213.9B in year-five free cash flow. At the assumed $720B of sales, that takes a 44.8% operating margin versus the model’s 42%. The less demanding near-term earnings hurdle and the more demanding long-term cash hurdle explain the hold. The close is 6.2% above the central cash value. A 20% discount yields $94.56. A full filing with clean controls, stable or improving collection time and lower reliance on Nvidia-backed financing would justify revisiting that entry price.
+
+A commitment to purchase hardware creates a supplier liability or obligation. A buyer’s reservation for cloud capacity creates a potential future service payment. Between them lie credit risk, site commissioning and collections. Nvidia’s position on both sides of parts of the buildout is why the model allows for partner funding and discounts its investment holdings. [CFO commentary](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27cfocommentary.htm)
+
+Nvidia generated $113.67B of company-defined free cash flow on $183.30B net income in the first nine months, a 62.0% conversion. Equity purchases of $58.10B less $9.49B of sale proceeds absorbed another $48.61B. That leaves $65.07B, or 22.2% of revenue, after those investments and before acquisitions or financing. Buying securities creates assets of uncertain exit value. Receivables reached $81.03B and collection time rose to 64 days from 60. Management attributes this to the Rubin shipment schedule and longer payment terms for some investment-grade customers. Two customers held 35% of receivables. Inventory rose to $39.72B from $31.6B in the preceding quarter. Watch the combination of receivables, customer concentration and facility acceptance as shipments scale. [Earnings and cash-flow reconciliation](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27pr.htm) · [Balance sheet and customer concentration](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/supplementalfinancialinfor.htm) · [Payment terms and inventory](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27cfocommentary.htm).
+
+## 9. What would strengthen or weaken the investment case
+
+| Next disclosure to watch | Stronger evidence for the supply-constrained case | Evidence that changes the forecast |
+|---|---|---|
+| Revenue and product ramps | Shipments track guidance as supply expands | Available supply rises but shipments miss |
+| Customer readiness | Funded projects obtain permits and power | Repeated deferrals, lost financing or restricted end users |
+| Margins | FY2028 gross margin holds near 72–73% | Cost pressure or discounts exceed the modeled range |
+| Cash collection | Cash flow catches up with earnings; DSO stabilizes | Persistent receivable growth and poorer collections |
+| Neocloud exposure | Independent financing, customer prepayments and limited guarantee draws | Additional backstops needed to sustain sales |
+| Competition | Nvidia remains economical on customers’ actual workloads | Buyers shift meaningful incremental spend to alternatives |
+| Filings and governance | Q3 10-Q clarifies exposures and investigations | Material revisions, adverse findings or broader restrictions |
+
+**Investment assessment.** Hold at $125.53. A new entry around $95 would compensate for estimated funding costs and a lower sustainable operating margin. Strong collections with stable payment terms, fewer guarantees and improving inventories would raise confidence in paying more.
+
+## 10. What the hyperscalers buy, build and monetize
+
+Quarterly revenue and margins below use the company’s own reporting perimeter. An API sale pays for serving a model and may involve a royalty or distribution fee. A capacity rental pays for accelerator time or committed availability. Paid Copilot seats, Google Search monetization and ads are another revenue stream. Those transactions can all arise from the same workload, so adding the upstream and downstream revenue overstates final customer spending.
+
+| Company | Nvidia deployments and custom silicon | Reported AI usage, revenue and margins |
+|---|---|---|
+| Amazon AWS | The August plan adds **2M Nvidia GPUs in calendar 2027–28** to more than 1M announced for a deployment starting in 2026. These global plans span Blackwell Ultra and Rubin generations. AWS is scaling Trainium for training and serving, with planned Nvidia interconnect integration. Anthropic committed at least **$110B** to AWS through April 2036 under its filed deal, which covers cloud infrastructure and supports Trainium. | **$46.0B** AWS revenue, **38.7%** AWS operating margin, and about **17×** year-over-year Bedrock token volume. AWS provides no Bedrock dollar revenue, training/inference split or token margin in these results. [Earnings](https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Third-Quarter-Results/) · [GPU plan](https://press.aboutamazon.com/aws/2026/8/aws-and-nvidia-to-deliver-2-million-additional-gpus-and-next-generation-infrastructure-for-agentic-and-physical-ai) · [Trainium](https://www.anthropic.com/news/anthropic-amazon-compute) · [Anthropic filing](https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm) |
+| Alphabet Google Cloud | Nvidia Rubin racks are running. Google builds **TPU 8t** for training and **TPU 8i** for inference and reinforcement learning, and expects TPU systems sales to ramp in 2027. Anthropic pledged at least **$121.3B** to Google hosting through July 2033 and estimated another **$125–150B** for contingent additional TPU compute delivered from 2028–31, outside its fixed contractual table. | **$30.7B** Cloud revenue and **36.2%** Cloud operating margin. First-party model APIs ran at **32B tokens/minute**. Management described tens of billions of year-to-date AI revenue across Cloud offerings, a broader figure than model API sales. The dollar split across serving, training and other cloud products remains undisclosed. [Earnings call](https://abc.xyz/investor/events/event-details/2026/2026-Q3-Earnings-Call-2026-Ujou16CTw9/default.aspx) · [Accelerators](https://cloud.google.com/blog/products/compute/ai-infrastructure-at-next26?hl=en) · [Anthropic filing](https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm) |
+| Microsoft Azure | Deployed GB300 and reported its first Rubin deliveries. Also uses AMD and designs **Maia 200/300** to target inference. Its earnings call cites up to **1.7× tokens per watt** in select Teams/Copilot workloads, a company measurement for those experiences. Anthropic’s amended Azure deal has **$47.2–49.2B** in committed spend through June 2033 with specified exceptions. Azure also rents capacity from providers such as IREN and Nscale. | **$63.9B** Microsoft Cloud revenue and **66%** Microsoft Cloud gross margin, both spanning products beyond Azure. Azure grew **48%** and Foundry revenue more than tripled year over year. The company gives neither Foundry revenue dollars nor Copilot/Foundry token contribution margins or a workload split. [Earnings call](https://www.microsoft.com/en-us/investor/events/fy-2027/earnings-fy-2027-q1) · [Maia roadmap](https://azure.microsoft.com/en-us/blog/infrastructure-for-the-frontier-era-scaling-intelligence-through-open-industry-collaboration/) · [Anthropic filing](https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm) |
+| Oracle OCI | Offers Rubin NVL72 and Vera and is expanding multigigawatt infrastructure. Some customers may supply chips or prepay. Oracle builds cloud networking and orchestration. A proprietary AI accelerator volume plan did not surface in the reviewed sources. | **$7.4B** quarterly cloud infrastructure revenue, up **121%**; approximately **35%** company-wide GAAP operating margin. OCI documents on-demand character metering and dedicated GPU-hour billing for some generative AI services. OCI token margins and workload split are undisclosed. [Earnings](https://investor.oracle.com/investor-news/news-details/2026/Oracle-Announces-Q1-Results-Driven-by-Triple-Digit-Growth-in-Cloud-Infrastructure-Revenues/default.aspx) · [Infrastructure plan](https://www.oracle.com/news/announcement/blog/ai-world-building-the-next-decade-of-oracle-cloud-infrastructure-2026-10-27/) · [Billing docs](https://docs.oracle.com/en-us/iaas/Content/generative-ai/calculate-cost.htm) |
+| Meta | Plans multimillion-unit Nvidia deployment across generations and is also diversifying to AMD. Own **MTIA 300** targets internal ranking and recommendation training; Meta’s announcement covers those workloads. | AI also earns money indirectly via ranking, engagement and ads. Public earnings do not provide a separate external token revenue or token margin line, nor a training/inference cost split. [Earnings](https://investor.atmeta.com/investor-news/press-release-details/2026/Meta-Reports-Third-Quarter-2026-Results/default.aspx) · [Nvidia plan](https://nvidianews.nvidia.com/news/meta-builds-ai-infrastructure-with-nvidia/) · [MTIA](https://engineering.fb.com/2026/08/24/networking-traffic/mtia-300-meta-training-chip-built-in-nics/) |
+
+Read geography and timing at the project level. AWS’s 2027–28 plan is global. A Microsoft contract with a neocloud can cover the same Nvidia systems cited by that neocloud. Google’s TPU financing, AWS’s Trainium cloud service contract, and Nvidia’s system sales have different accounting perimeters, contract maturities and revenue recognition.
+
+## 11. Major neoclouds and Nvidia demand
+
+| Provider | Nvidia hardware and what the provider builds | Revenue and economics disclosed |
+|---|---|---|
+| CoreWeave | Rubin is in production. Nvidia and CoreWeave announced plans to enable **more than 5 GW by 2030** and a **$2B** Nvidia equity investment. CoreWeave builds orchestration, developer and inference tooling. | **$3.661B** Q3 revenue, **$207M** operating income, approximately **6%** operating margin, **$846M** net interest expense and a **$709M** net loss. **$132.5B** service backlog includes capacity availability and delivery conditions. Public list price examples: H100 **$6.16** and B200 **$8.60** per GPU-hour in eight-GPU on-demand instances. No product-level training/inference economics. [Earnings](https://www.sec.gov/Archives/edgar/data/1769628/000176962826000461/coreweave3q26earningspress.htm) · [Nvidia agreement](https://nvidianews.nvidia.com/news/nvidia-and-coreweave-strengthen-collaboration-to-accelerate-buildout-of-ai-factories) · [GPU rates](https://wf.coreweave.com/pricing) |
+| Nebius | Nvidia partnership to enable **more than 5 GW by end of 2030**, including Rubin and future platforms, with a **$2B** Nvidia investment. Nebius builds Token Factory, model routing and orchestration. | **$980.8M** Q3 consolidated revenue, **$465.8M** adjusted EBITDA, **$354.7M** D&A and **$50.4M** operating income, or **5.1%** operating margin. Management says managed inference product **Token Factory is approaching a multi-hundred-million-dollar run rate**. That company estimate supplies no accrued quarterly token revenue, token margins or workload mix. [Results](https://assets.nebius.com/assets/e2ac679c-fc62-4799-ba0e-6611e59c6863/Nebius-2026-Q3.pdf) · [Shareholder letter](https://assets.nebius.com/assets/65994da2-e220-40cd-bb5d-72e9654a237d/SHL.pdf?cache-buster=2026-11-12T11%3A55%3A44.772Z) · [Nvidia agreement](https://nebius.com/newsroom/nvidia-and-nebius-partner-to-scale-full-stack-ai-cloud) |
+| IREN | Its Microsoft service deal was announced at **$9.7B over five years** and its Dell GPU and equipment procurement at **$5.8B**. Microsoft capacity ramps in phases. Nvidia is separately a customer under a **$3.4B** five-year IREN compute deal. IREN builds data centers and cloud software. | **$200M** quarterly AI cloud revenue across service and leasing. Reported direct costs of **$28M** imply **86%** direct contribution before depreciation, amortization and overhead. The company as a whole posted a **$186M** operating loss and **$263M** net loss. No token revenue or training/inference margin reported. [SEC results](https://www.sec.gov/Archives/edgar/data/1878848/000187884826000065/irenreportsq1-fy27result.htm) · [Microsoft and Dell deals](https://iren.com/resources/blog/iren-signs97-billion-agreement-with-microsoft-to-deploy-ai-cloud-infrastructure) · [Nvidia agreement](https://www.iren.com/resources/blog/three-layers-one-compounding-advantage-the-iren-thesis) |
+| Lambda | Offers Nvidia Rubin and its own cloud software. Anthropic filed about **$41.3B** of Nvidia-powered capacity deals extending into 2034. A **$34.9B** portion is terminable because a facility lease deadline was missed. Anthropic reported neither side had issued notice and said it did not currently intend to terminate. | Private. Public product information establishes training and serving capability. Company-level or product-level margins, revenue and workload split were not available in the sources reviewed. [Rubin platform](https://lambda.ai/vr-200) · [Anthropic filing](https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm) |
+| Crusoe | Expanding with Nvidia Rubin and also lists AMD instances. Its proprietary work includes power, data center infrastructure and orchestration; a tenant’s GPU purchase can appear in the tenant’s plan. | Private. Sells token-metered managed inference and dedicated GPU-hours. Public prices are available, with no comparable quarterly earnings or token margins identified. [Nvidia plan](https://www.crusoe.ai/resources/newsroom/crusoe-expands-nvidia-collaboration) · [Cloud pricing](https://www.crusoe.ai/cloud/pricing) |
+| Nscale | UK-based, with U.S. sites. Announced a Microsoft deal for approximately **200,000 GB300s** in Europe and the U.S. and brought its first Rubin systems online November 18. Anthropic disclosed up to **$44.6B** of Nvidia-powered capacity through 2033 with fees beginning on accepted delivery and financing requirements. | Private. Builds sites, orchestration and managed inference. The contracts disclose capacity and contingent spend. Public token revenue, cost and margins were unavailable. [Microsoft deal and correction](https://www.nscale.com/press-releases/nscale-microsoft-2025) · [Rubin deployment](https://www.nscale.com/press-releases/nscale-first-nvidia-vera-rubin-nvl72-brought-up) · [Anthropic filing](https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm) |
+| SpaceX AI / xAI | Runs Nvidia-powered Colossus. SpaceX announced about **$40B** in committed financing for Rubin systems and related equipment, subject to closing conditions. Anthropic agreed to spend up to **$120.5B** for Nvidia-powered access, with cancellation rights after initial noncancelable periods. | Q3 Super Intelligence revenue **$7.560B**, including **$7.022B** for solutions and infrastructure covering cloud capacity, Grok, Cursor and other products. Total segment operating income **$431M**, or **5.7%**. Grok API dollars, training/inference split and token margin are undisclosed. [Q3 10-Q](https://www.sec.gov/Archives/edgar/data/1181412/000162828026066880/spcx-20260930.htm) · [GPU financing announcement](https://ir.spacex.com/updates/releases-details/2026/SPACEX-SECURES-40-BILLION-IN-THE-LARGEST-GPU-FINANCING-EVER-2026-EnDqGhTAB3/default.aspx) · [Anthropic filing](https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm) |
+| Fluidstack | Develops capacity for Anthropic and other customers. TeraWulf is a site landlord in certain deals. In its quarterly filing, TeraWulf also disclosed credit support agreements with Google in connection with the Anthropic HPC leases. | Separately identifying Fluidstack’s GPU procurement, token revenue and margins requires disclosures not available in the reviewed sources. The original $50B plan covered infrastructure, including projects beyond chip purchases. [Anthropic project announcement](https://www.anthropic.com/news/anthropic-invests-50-billion-in-american-ai-infrastructure) · [TeraWulf filing](https://investors.terawulf.com/sec-filings/all-sec-filings/content/0001628280-26-071671/wulf-20260930.htm) |
+
+For neoclouds, accelerator utilization and financing affect profit independently. A capacity contract may transfer utilization risk to the tenant after acceptance. Financing, delivery or facility failures can still prevent the supplier from reaching that point. Contract maximums, equity financing, GPU/hardware orders and rental backlog describe different cash flows and should not be summed as Nvidia sales.
+
+## 12. One model provider discloses what hyperscalers leave open
+
+**Anthropic’s final IPO prospectus is a downstream benchmark.** In the nine months ended September 30, Anthropic reported **$33.242B of revenue**, **$4.812B of cost of revenue** and **$18.808B of total compute and infrastructure expense** across functions. Subtracting cost of revenue gives **$28.430B of derived gross profit, or 85.5%**. GAAP operating loss was **$1.260B**, or **−3.8%**. R&D expense of **$19.240B** includes model development, research and internal use alongside people, software and overhead. Customer-serving compute dominates cost of revenue, while sales and marketing also includes compute for some free access. The filing provides no clean split of compute dollars by training and inference or gross margins by model, token and hardware. Its revenue spans direct products, developer access and distribution through cloud partners. [Final prospectus, MD&A and Note 8](https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm)
+
+Anthropic trains and serves models across **Trainium, TPUs, Nvidia and AMD**. It disclosed **$900.9B** of aggregate committed spend after including subsequent arrangements, substantially all compute and infrastructure, with **$70.7B** expected over the 12 months after September 30. Its contracts include leases and service arrangements with different maturities and conditions. Broadcom-related leases provide TPU capacity, while Nscale, Lambda and SpaceX agreements explicitly provide Nvidia GPU capacity. These disclosures substantiate both custom silicon adoption and Nvidia demand. They supply no current chip-market revenue denominator. [Final prospectus, liquidity and infrastructure commitments](https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm)
+
+## 13. Token pricing, training costs and unit margins
+
+USD per million tokens, standard short-context or the named public offer, checked for this report on November 21, 2026. Rates are directionally useful as customer prices. Realized revenue depends on the mix of models, cache usage, regional pricing, discounts, and how the model owner and cloud share the bill.
+
+| Cloud and model | Input | Cached input | Output | Published terms |
+|---|---:|---:|---:|---|
+| Microsoft Foundry / OpenAI GPT‑6 Luna | $0.10 | $0.01 | $0.50 | Global standard short context. [Foundry prices](https://azure.microsoft.com/en-us/blog/gpt-6-astra-sol-and-luna-for-production-agents-in-microsoft-foundry/) |
+| AWS Bedrock / OpenAI GPT‑6 Luna | $0.10 | $0.01 | $0.50 | Global standard short context. U.S. tier $0.11 / $0.011 / $0.55. [Bedrock model card](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-luna.html) |
+| Microsoft Foundry / OpenAI GPT‑6 Sol | $2.00 | $0.20 | $10.00 | Global standard short context. [Foundry prices](https://azure.microsoft.com/en-us/blog/gpt-6-astra-sol-and-luna-for-production-agents-in-microsoft-foundry/) |
+| Microsoft Foundry / OpenAI GPT‑6 Astra | $10.00 | $1.00 | $50.00 | Global standard short context. [Foundry prices](https://azure.microsoft.com/en-us/blog/gpt-6-astra-sol-and-luna-for-production-agents-in-microsoft-foundry/) |
+| Google Vertex AI / Gemini 4 Hydrogen | $1.50 | $0.075 | $7.50 | Global Standard. Global Batch is $0.75 input, $0.0375 cache read and $3.75 output. [Google list prices](https://cloud.google.com/model-garden/pricing) |
+| Crusoe / GLM‑5.3 Flash | $0.15 | $0.03 | $0.50 | Managed inference list rates. [Crusoe price list](https://www.crusoe.ai/cloud/pricing) |
+
+### What OpenAI charges its customers
+
+| USD per million text tokens, standard short context | Uncached input | Cache read | 30-minute cache write | 12-hour cache write | Output |
+| --- | --- | --- | --- | --- | --- |
+| GPT-6.2 Sol | $2.00 | $0.10 | $2.50 | $5.00 | $10.00 |
+| GPT-6.2 Astra | $8.00 | $0.40 | $10.00 | $20.00 | $40.00 |
+
+At the 8M input + 1M billed output mix above, standard GPT-6.2 Sol costs the buyer $26 with all input uncached and no cache writes. If 6M are cache reads and 2M are uncached, the charge is $14.60, excluding initial writes. Astra is $104 or $58.40 respectively. The closed GPT-6.2 models have different capabilities and undisclosed serving costs. Their prices cannot establish a margin from the gpt-oss hardware benchmark. A production agent can call models repeatedly, pay separately for tools and generate invisible reasoning tokens billed as output. Repeated retrieval, retries and cache writes matter to the total bill per successfully completed task. [OpenAI API rate card](https://developers.openai.com/api/docs/pricing) · [Reasoning token billing](https://developers.openai.com/api/docs/guides/reasoning)
+
+### A production fleet gives separate input and output costs
+
+DeepSeek published a day of V3/R1 traffic on February 27–28, 2025. Eight Nvidia H800s per node at its assumed $2 per GPU-hour imply $16 per node-hour. Its separate prompt-reading and token-generation fleets let us price each phase. A million means 1,000,000 tokens throughout. This is a historical production observation from one operator.
+
+| DeepSeek V3/R1 | What it measured | GPU lease equivalent per million |
+| --- | --- | --- |
+| Input, prompt processing | 73,700 input tokens/second per node, including cache hits | **$0.060 per 1M input** |
+| Output, generation | 14,800 output tokens/second per node, averaging 20–22 generated tokens/second per user | **$0.300 per 1M output** |
+| Actual daily mix | 608B input and 168B output; 56.3% of input hit the disk cache | **$0.112 per 1M total** |
+
+For each phase, cost = 1,000,000 × $16 ÷ (3,600 × node tokens/second). The separate estimates reproduce $87.1K for the day, within 0.1% of the company's $87,072. The input rate applies to its observed cache mix. A cold-prompt or cache-hit-only production cost cannot be isolated from this disclosure. DeepSeek's hypothetical billing at then-published R1 rates included free traffic and ignored discounts. Billed sales and gross margin were lower than that hypothetical comparison suggests. [DeepSeek production volumes, throughput, lease assumption and billing limits](https://github.com/deepseek-ai/open-infra-index/blob/main/202502OpenSourceWeek/day_6_one_more_thing_deepseekV3R1_inference_system_overview.md)
+
+### Blackwell versus Hopper on the same model and workload
+
+InferenceX measured OpenAI's open-weight gpt-oss-120b using FP4 and vLLM on single-turn requests targeted at 8,192 input and 1,024 output tokens. For this fixed 8:1 mix, each 1M generated tokens entails 8M input plus 1M output. Google Cloud lists this same model at $0.09/1M input and $0.36/1M output, or **$1.08 per workload of 8M input + 1M output**, equivalent to $0.12 per million combined. This comparison uses Google's public price as a competitive benchmark and does not identify Google's serving hardware. [Google Cloud model price](https://cloud.google.com/model-garden/partner-models/pricing)
+
+| Chip and cost basis | User speed target | Measured total tokens/s per GPU | $/1M combined | $/8M input + 1M output | Revenue left after compute* |
+| --- | --- | --- | --- | --- | --- |
+| B200, modeled hyperscaler ownership at $1.73/hr | 50/s | 44,489 | $0.011 | $0.097 | 91% |
+| H200, modeled hyperscaler ownership at $1.22/hr | 50/s | 9,319 | $0.036 | $0.327 | 70% |
+| B200, Nebius on demand at $8.50/hr | 50/s | 44,489 | $0.053 | $0.478 | 56% |
+| H200, Nebius on demand at $5.40/hr | 50/s | 9,319 | $0.161 | $1.449 | −34% |
+| B200, same on-demand rate, faster service | 100/s | 29,548 | $0.080 | $0.719 | 33% |
+
+*Illustrative compute contribution = ($1.08 less modeled serving cost) ÷ $1.08. The formula for the workload is 9,000,000 × hourly GPU cost ÷ (3,600 × combined throughput). Each row assumes all paid hours sustain benchmark throughput. At half of benchmark throughput over paid hours, the $0.478 rental case costs $0.955 and leaves about 12%. The break-even throughput fraction is 44% for the B200 at 50/s, or 67% at 100/s. On-demand H200 at 50/s would require more than the measured throughput. Input reading and output generation share a server in these tests, so the workload cost cannot be counted once as an input expense and again as an output expense. Peak benchmarks omit production tail-latency requirements, outages, traffic variability and longer agent histories. [B200 methods and measurements](https://inferencex.semianalysis.com/run/gptoss-120b-on-b200) · [H200 methods and measurements](https://inferencex.semianalysis.com/run/gptoss-120b-on-h200) · [Nebius GPU-hour schedule effective October 1, 2026](https://nebius.com/prices)
+
+The ownership input comes from SemiAnalysis' hardware cost model, which builds in server capital, power, colocation and cost of capital. Real acquisition discounts, utilization, asset lives and financing terms vary. A rental quote includes the host's pricing and can include a premium for immediate availability. Extra application hosting, model royalties or revenue share, support, safety checks and research can all change the operator's earnings. The table estimates a compute contribution and uses no assumption about a particular cloud's realized net margins. [Ownership model scope](https://inferencex.semianalysis.com/chips/b200) · [CoreWeave on useful lives and financing](https://www.sec.gov/Archives/edgar/data/1769628/000176962826000465/crwv-20260930.htm)
+
+### Custom silicon already runs production inference
+
+| Platform and workload | USD per million, with units | What the comparison establishes |
+| --- | --- | --- |
+| Google TPU v5e-8, Gemma 7B | $0.30 per 1M generated output, prompt processing included | Google's April 2024 JetStream benchmark used maximum 1,024-token inputs and outputs, INT8 and a three-year US commitment. It illustrates a historical achievable customer expense. [Google's Gemma benchmark](https://cloud.google.com/blog/products/compute/accelerating-ai-inference-with-google-cloud-tpus-and-gpus?hl=en) |
+| AWS Trainium2, i14 Laplace 3B | $0.86 per 1M generated output at published decode throughput; $0.083 per 1M training tokens on the same instance | AWS measured 11,544 generated tokens/s at 1,280 concurrent sequences and about 120,000 training tokens/s after warmup on one trn2.48xlarge. Each estimate uses the Ohio block rate of $35.7608 per instance-hour. Real arrival patterns and compiler warmup affect achieved rates. [AWS experiment](https://aws.amazon.com/blogs/machine-learning/beyond-the-kv-cache-training-and-serving-i14s-laplace-3b-linear-attention-model-on-aws-trainium2-with-native-pytorch/) · [AWS reservation price](https://aws.amazon.com/ec2/capacityblocks/pricing/) |
+| Nvidia H800, DeepSeek V3 pretraining | $0.36 per 1M pretraining tokens | 2.664M GPU-hours × assumed $2/hour ÷ 14.8T tokens. This covers the successful pretraining run. Research experiments, staff and later training stages add cost. A training token has a different computational purpose from a billed inference token. [DeepSeek V3 technical evidence](https://github.com/deepseek-ai/DeepSeek-V3) · [Authors' technical report](https://arxiv.org/abs/2412.19437) |
+
+Each experiment uses a different model. A chip ranking needs the same model quality, precision, prompt lengths, cache-hit mix and latency target on each platform. TPU and Trainium can compete where model owners can port predictable volumes efficiently. Nvidia's software and interconnect are valuable when workloads change or when time to deploy matters. Google's latest Q3 call advertised up to 80% better inference price-performance for TPU 8i versus the previous TPU generation. It disclosed no product-level margin. [Google's comparison protocol](https://docs.cloud.google.com/docs/ai-ml/accelerator-performance-benchmarking) · [Alphabet Q3 call](https://abc.xyz/investor/events/event-details/2026/2026-Q3-Earnings-Call-2026-Ujou16CTw9/default.aspx)
+
+**Depreciation and utilization can dominate the result.** Amazon’s 2025 10-K says it shortened some server and network useful lives from six to five years amid faster AI development. The change added **$1.4B** of 2025 depreciation and amortization, primarily affecting AWS. In the illustrative serving model above, utilization must be about **77%** on the GPU and **49%** on the custom accelerator to break even at the stated realized price. A 20% cut to that realized price moves those hurdles to **102%** and **65%**, respectively. This demonstrates why gross margins on token sales cannot be inferred from public rental prices, even with an accelerator performance estimate. [Amazon 2025 10-K](https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm)
+
+## 14. What changes for Nvidia’s forecast and valuation
+
+**Next several quarters.** Nvidia’s call still describes demand above available supply, and first production Rubin racks are running at several large cloud customers. AWS’s unit plan and Anthropic’s explicitly Nvidia-powered contracts support continuing demand. A site delay, export restriction or financing failure can still push Nvidia shipments out even when end-user demand exists. Capacity can be reallocated when another buyer has compatible power, site readiness, funding, export eligibility and delivery timing. That distinction matters because the $390B supply commitment is largely procurement of inputs and Nvidia must manage inventory when product eligibility or demand changes. [Nvidia call](https://s201.q4cdn.com/141608511/files/content_files/NVDA-3Q27-Earnings-Transcript.pdf) · [Anthropic contracts](https://www.sec.gov/Archives/edgar/data/2130357/000162828026074944/anthropicpbc-424b4.htm)
+
+**Beyond the guidance year.** Customers can grow total spending while shifting more of the next workload to custom silicon. A lower cost per successful task can drive usage up. If realized revenue per token halves, paid token volume must more than double for token revenue to grow, and required chip capacity also depends on each generation’s throughput. Model vendor gross margins give some evidence that paying customers value the service. They do not establish that every accelerator deployment can earn an adequate return after R&D, credit costs and utilization risk. For Nvidia valuation, assess whether booked revenue converts to cash and whether Nvidia retains pricing power as the buyers above gain credible alternatives.
+
+Policy, custom-chip penetration, and financing can affect the valuation through different lines. A project delay primarily changes shipment timing and working capital. A switch to a competitive accelerator can change volumes, mix and gross margin. An underperforming investment, guaranteed buyer or backstopped project can reduce realized cash and raise the multiple risk even if system sales initially close. There is no public reconciliation to a reliable FY2029–30 U.S. GPU order book. The reverse valuation therefore remains a conditional calculation.
+
+## Seven stock valuations and financial reports
+
+| Company | Nov 20 close | Bearish | Normal | Best | Entry screen |
+|---|---:|---:|---:|---:|---:|
+| Nvidia | $125.53 | $74 | $186 | $330 | $95 |
+| TSMC | $318.71 | $214 | $381 | $578 | $329 |
+| Broadcom | $304.41 | $173 | $353 | $529 | $266 |
+| Marvell Technology | $122.28 | $46 | $133 | $233 | $71 |
+| Samsung Electronics | ₩183,100 | ₩110,817 | ₩289,411 | ₩527,618 | ₩170,488 |
+| Micron | $594.51 | $313 | $848 | $1,738 | $482 |
+| SK hynix | ₩1,113,000 | ₩415,928 | ₩1,155,125 | ₩2,159,668 | ₩639,889 |
+
+Peer entry prices use the lower of normal price divided by 1.15 and bearish price divided by 0.65. This requires 15% normal upside and caps modeled bearish loss at 35%. Nvidia uses a 20% discount to cash value. Figures exclude dividends. All seven are conditional price estimates for November 2027. The detailed operating assumptions and interactive five-year income, balance sheet and cash-flow tables are in the Investment OS report (see the included HTML report).
+
+| Company | Latest quarterly financial report | Last full annual financial report |
+|---|---|---|
+| Nvidia | [Q3 FY2027 · October 25](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27pr.htm) | [FY2026](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm) |
+| TSMC | [Q3 2026 · September 30](https://www.sec.gov/Archives/edgar/data/1046179/000104617926000726/a3q26e_withguidancexfinal.htm) | [FY2025](https://investor.tsmc.com/sites/ir/financial-report/2025/TSMC%202025Q4%20Consolidated%20Financial%20Statements_E_0.pdf) |
+| Broadcom | [Q3 FY2026 · August 2](https://www.sec.gov/Archives/edgar/data/1730168/000173016826000076/avgo-08022026x8kxex99.htm) | [FY2025](https://www.sec.gov/Archives/edgar/data/1730168/000173016825000121/0001730168-25-000121-index.htm) |
+| Marvell Technology | [Q2 FY2027 · August 1](https://www.sec.gov/Archives/edgar/data/1835632/000183563226000022/q227_8kx812026ex-991.htm) | [FY2026](https://www.sec.gov/Archives/edgar/data/1835632/000183563226000011/0001835632-26-000011-index.htm) |
+| Samsung Electronics | [Q3 2026 · September 30](https://news.samsung.com/global/samsung-electronics-announces-third-quarter-2026-results) | [FY2025](https://images.samsung.com/is/content/samsung/assets/global/ir/docs/2025_con_quarter04_all.pdf) |
+| Micron | [FY2026 Q4 · September 3](https://www.sec.gov/Archives/edgar/data/723125/000072312526000018/a2026q4ex991-pressrelease.htm) | [FY2026](https://www.sec.gov/Archives/edgar/data/723125/000072312526000023/mu-20260903.htm) |
+| SK hynix | [Q3 2026 · September 30](https://news.skhynix.com/en/q3-2026-business-results/) | [FY2025](https://www.sec.gov/Archives/edgar/data/2120882/000119312526299963/d32785d424b4.htm) |
+
+## Scope and remaining uncertainty
+
+The report prioritizes Nvidia’s latest earnings materials, last filed quarterly report, annual results, customer earnings and supplier commentary. Q3 supplemental figures are unaudited; its 10-Q was still forthcoming in the reviewed materials. Company utilization, demand and future supply statements remain management representations. No reliable public schedule reconciles all future Nvidia orders, cancellation rights, restricted end users, powered sites and financing. No numerical loss is assigned to unimplemented policy statements or unresolved investigations. The report gives a valuation framework rather than a unique buy/sell price.
+
+---
+
+# [2] Demand, allocation, and management guidance
+
+## Overview
+
+**Source:** Nvidia November 17, 2026 earnings call. **Classification:** management representations and forward-looking guidance; not independently audited utilization or order backlog.
+
+[Original call transcript](https://s201.q4cdn.com/141608511/files/content_files/NVDA-3Q27-Earnings-Transcript.pdf)
+
+[Latest earnings release](https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-Financial-Results-for-Third-Quarter-Fiscal-2027/default.aspx)
+
+[Latest filed Q2 10-Q](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000075/nvda-20260726.htm)
+
+## Reviewed evidence
+
+Transcript pp. 3–4: Hyperscale revenue about $60B; AI Clouds, Industrial & Enterprise about $47B; management describes full utilization. Pages 5–7: demand exceeds supply; FY2028 revenue growth raised from about 70% to 75%; FY2028 gross margin expected 72–73%. Pages 7 and 13: assessment considers export controls, but study is continuing; allocation considers ready facilities, capital and offtake. Pages 11–12: management expresses continued demand beyond calendar 2027 without providing quantified 2028–2029 coverage.
+
+## Limits
+
+The Q3 10-Q was still forthcoming according to the call. Q2 Note 7 reports $3.2B of remaining performance obligations on contracts longer than one year, which is not a complete hardware-order backlog. A cloud service backlog, supplier commitment, signed deployment announcement and recognized chip sale measure different things. Neither this report nor the company disclosures reviewed quantify a residual demand cushion after all policy and financing shocks.
+
+(Back to report. See undefined below.)
+
+---
+
+# [3] Manufacturing and component constraints
+
+## Overview
+
+**Period:** supplier and Nvidia disclosures through November 17, 2026. **Question:** whether manufacturing shortages persist. Supplier-wide demand is not equivalent to a quantified Nvidia allocation.
+
+## Original sources
+
+[Nvidia CFO commentary](https://s201.q4cdn.com/141608511/files/doc_financials/2027/Q327/Q3FY27-CFO-Commentary.pdf)
+
+[TSMC Q3 earnings transcript](https://investor.tsmc.com/english/encrypt/files/encrypt_file/reports/2026-10/eba4fac72873bf546b669bd2b5d973df5c93215d/TSMC%203Q26%20Transcript.pdf)
+
+[Micron Q4 prepared remarks](https://s25.q4cdn.com/621799436/files/doc_financials/2026/q4/Q4-FY26-Prepared-Remarks.pdf)
+
+## Evidence
+
+Nvidia supply/capacity commitments: $390B, up from $279B; mostly memory procurement drove the increase. Timing: $69B remainder FY2027; $203B FY2028; $92B FY2029; $26B thereafter. These are supplier obligations, not revenue or reserved GPU counts.
+
+TSMC: October 15 call pp. 3, 8 describes a substantial demand/supply gap, tight tools and $60–64B 2026 capex; no customer-specific allocation disclosed.
+
+Micron: September 30 remarks pp. 3–5 says most calendar 2027 HBM bit supply is covered by agreements with higher prices, and expects tighter memory conditions in 2027–2028. New capacity takes additional quarters to ramp.
+
+## Interpretation
+
+Component scarcity can cap shipments and raise costs simultaneously. Secured input quantities do not by themselves establish profitable finished-rack output. No public source reviewed gives a complete SKU-by-SKU, quarter-by-quarter Nvidia production ceiling through 2029.
+
+(Back to report. See undefined below.)
+
+---
+
+# [1] Reported results and annual revenue bridge
+
+## Overview
+
+**Period:** FY2026 ended January 25, 2026; nine months and quarter ended October 25, 2026. **Scope:** worldwide Nvidia results, unless stated. Forecasts are identified separately.
+
+[Chart: Annual revenue and guidance. The corresponding numerical inputs and methodology are in the evidence section below.]
+
+## Original sources
+
+[Nvidia FY2026 annual results](https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-Financial-Results-for-Fourth-Quarter-and-Fiscal-2026/default.aspx)
+
+[Q3 FY2027 results](https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-Financial-Results-for-Third-Quarter-Fiscal-2027/default.aspx)
+
+[Q3 supplemental financial information](https://s201.q4cdn.com/141608511/files/doc_financials/2027/Q327/Supplemental-Financial-Information-NVDA-2027-Q3.pdf)
+
+[Q3 earnings call](https://s201.q4cdn.com/141608511/files/content_files/NVDA-3Q27-Earnings-Transcript.pdf)
+
+## Reviewed inputs and calculations
+
+All revenue in USD billions. FY2026 actual 215.938. FY2027 nine-month actual 293.681. Q4 guidance 130 ±3%, including one additional week. FY2027 implied midpoint = 293.681 + 130 = 423.681; range 419.781–427.581. FY2028 management growth forecast approximately 75%; mechanically implied midpoint = 423.681 × 1.75 = 741.44175. Applying that growth to the Q4 guidance endpoints gives 734.61675–748.26675; this is arithmetic around approximate guidance, not a company-issued range or confidence interval.
+
+## Revenue classification
+
+FY2026: actual. FY2027: actual nine months plus Q4 guidance. FY2028: derived from management’s growth forecast. FY2029 and FY2030: no numerical company revenue guidance identified. Q3 U.S.-headquartered direct-customer revenue = 72.899 / 115.844 = 62.9286%; this is neither U.S. installations nor a complete estimate of American end-customer demand.
+
+## Evidence flow
+
+Cross-checked reported values against the supplemental statements. Q4 headline sequential growth = 130 / 115.844 − 1 = 12.2199%; indicative weekly normalization = (130/14)/(115.844/13) − 1 = 4.2042%. This normalization is a simple comparison, not company guidance.
+
+(Back to report. See undefined below.)
+
+---
+
+# [5] American customer demand and deployment plans
+
+## Overview
+
+**Population:** major American cloud customers and Meta; global spending and deployments. **Caveat:** capex mixes buildings, chips, networking and other assets and uses different lease conventions.
+
+## Original sources
+
+[Amazon Q3 earnings](https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-Third-Quarter-Results/)
+
+[Alphabet Q3 call](https://abc.xyz/investor/events/event-details/2026/2026-Q3-Earnings-Call-2026-Ujou16CTw9/default.aspx)
+
+[Microsoft FY2027 Q1 call](https://www.microsoft.com/en-us/investor/events/fy-2027/earnings-fy-2027-q1)
+
+[Meta Q3 earnings](https://investor.atmeta.com/investor-news/press-release-details/2026/Meta-Reports-Third-Quarter-2026-Results/default.aspx)
+
+[AWS–Nvidia deployment plan](https://press.aboutamazon.com/aws/2026/8/aws-and-nvidia-to-deliver-2-million-additional-gpus-and-next-generation-infrastructure-for-agentic-and-physical-ai)
+
+[Meta–Nvidia partnership](https://nvidianews.nvidia.com/news/meta-builds-ai-infrastructure-with-nvidia/)
+
+[CoreWeave Q3 results](https://investors.coreweave.com/files/content_files/CoreWeave-3Q-2026-Infographic.pdf)
+
+## Reviewed evidence
+
+2026 capex guidance: Amazon cash capex about $220B; Alphabet $195–205B; Microsoft calendar-year capex about $170B; Meta $135–145B including principal payments on finance leases. Alphabet expects significantly higher 2027 capex and a TPU-sales ramp. Microsoft reported $45.2B quarterly capex with some third-party capacity delayed.
+
+AWS announced two million additional Nvidia GPUs during 2027–2028 beyond its prior million-plus plan. Meta’s multiyear partnership references millions of GPUs without a delivery schedule or public dollar backlog. CoreWeave reports $132.5B service revenue backlog and about $9B expected near-term customer prepayments/deposits.
+
+## Limits
+
+The budgets are not a harmonized market-size estimate and cannot be added to Nvidia orders. Cloud backlog can overlap with other companies’ announcements and depends on service delivery; no dollar-to-GPU conversion is applied.
+
+(Back to report. See undefined below.)
+
+---
+
+# [6] Export controls and data-center policy
+
+## Overview
+
+**Cutoff:** November 21, 2026. Distinguish operative rules and permit actions from later political statements. These are material selected policies, not an inventory of every local ordinance.
+
+## Original sources
+
+[BIS rule, effective November 19](https://www.federalregister.gov/documents/2026/11/19/2026-23529/addressing-remote-access-to-advanced-semiconductors)
+
+[New York July 14 action](https://www.governor.ny.gov/news/first-statewide-moratorium-new-hyperscale-data-centers-launched-governor-kathy-hochul)
+
+[Texas TCEQ October 19 response](https://www.tceq.texas.gov/downloads/response/tceq-response-gov-abbott-dc-directive.pdf/@@download/file/TCEQ-response-Gov-Abbott-DC-directive.pdf)
+
+[White House November 20 briefing](https://www.whitehouse.gov/releases/2026/11/at-press-briefing-president-trump-touts-historic-wins-for-americans-signals-deal-making-on-healthcare/)
+
+## Evidence
+
+Remote-access rule: specified advanced-computing items and restricted-country end-use/ownership; aggregate TPP thresholds; licensing and recommender-system provisions. Existing affected providers have a transition provision. It is not a blanket ban on ordinary American AI workloads.
+
+New York pauses specified discretionary environmental permits for up to a year. Texas confirms a pause on permits directly supporting data-center infrastructure. Neither establishes that every existing site stops operating.
+
+November 20: President states opposition to American companies building overseas data centers. The reviewed release does not provide an implementing prohibition, tax rate or effective date; treat as policy risk after Nvidia’s November 17 call.
+
+## Analytical transmission
+
+Restrictions can reduce eligible demand; permit/grid delays reduce capacity ready to accept chips. Reallocation works only if another lawful buyer has financing and a suitable site. With baseline demand D, deliverable supply S, and net demand lost L, supply remains binding only if D − L > S. The public record does not quantify all three.
+
+(Back to report. See undefined below.)
+
+---
+
+# [7] Financing, cash conversion, and governance
+
+## Overview
+
+**Period:** quarter and nine months ended October 25, 2026, plus November company/legal developments. Actual commitments, contingent exposures and reported investigations are different categories.
+
+## Original sources
+
+[CFO commentary](https://s201.q4cdn.com/141608511/files/doc_financials/2027/Q327/Q3FY27-CFO-Commentary.pdf)
+
+[Supplemental statements](https://s201.q4cdn.com/141608511/files/doc_financials/2027/Q327/Supplemental-Financial-Information-NVDA-2027-Q3.pdf)
+
+[CEO transition](https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-CEO-Transition/default.aspx)
+
+[Export-control oversight committee](https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Board-of-Directors-Establishes-National-Security-and-Export-Control-Oversight-Committee/default.aspx)
+
+[Reuters, November 20 accounting-probe report](https://www.investing.com/news/economy-news/exclusiveus-secs-nvidia-probe-is-examining-potential-accounting-issues-sources-say-5042460)
+
+[California attorney general, November 19 investigative subpoena](https://oag.ca.gov/node/633133)
+
+[Nvidia Q3 earnings release and FCF reconciliation](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27pr.htm)
+
+## Inputs
+
+Neocloud commitments $32B; conditional on financing, operational deployment and Nvidia acceptance. Maximum guarantees $118B, including $105B PORTS-Pike support phased as buildings enter service starting FY2029. No guarantee payments disclosed to date.
+
+Q3 receivables $81.033B; DSO 64 versus 60 prior quarter. Inventory $39.724B; raw materials $15.802B, work-in-process $17.767B, finished goods $6.155B. Nine-month equity gains $25.474B.
+
+Q3 operating cash flow $48.253B, capital and intangible asset purchases $4.422B, associated principal payments $0.054B, net income $65.287B. Nine-month operating cash flow $122.675B, capital and intangible asset purchases $8.856B, associated principal $0.147B, equity purchases $58.100B and equity-sale proceeds $9.493B.
+
+## Calculations
+
+Nvidia’s published Q3 FCF = 48.253 − 4.422 − 0.054 = $43.777B. CFO/net income = 73.91%. Nine-month Nvidia FCF = 122.675 − 8.856 − 0.147 = $113.672B. After net equity purchases = 113.672 − 58.100 + 9.493 = $65.065B before other uses, an analytical cash-use measure.
+
+## Governance qualification
+
+Nvidia appointed Colette Kress interim CEO and created a board export-control committee. California’s attorney general announced an investigative subpoena on November 19. Reuters separately reported an accounting-focused SEC inquiry, citing sources. The public material cited here establishes no finding of wrongdoing or blanket federal ban on neocloud vendor financing.
+
+Liquidity inputs at October 25, 2026: cash plus marketable debt $53.512B; long-term debt $32.371B. Marketable equity $44.219B and non-marketable securities $65.528B are not cash equivalents. These figures are not added to the P/E valuation as separate asset values.
+
+(Back to report. See undefined below.)
+
+---
+
+# [8] Custom chips and market-share comparability
+
+## Overview
+
+Forward announced capacity share differs from realized chip-revenue share. Neither is a complete measurement of all American hyperscaler procurement.
+
+## Original sources
+
+[J.P. Morgan, updated Icarus Files, p. 4](https://cdn.jpmorganfunds.com/content/dam/jpm-am-aem/global/en/insights/eye-on-the-market/the-icarus-files-amv.pdf)
+
+[Alphabet Q3 earnings call](https://abc.xyz/investor/events/event-details/2026/2026-Q3-Earnings-Call-2026-Ujou16CTw9/default.aspx)
+
+[AWS deployment and custom-chip interconnect announcement](https://press.aboutamazon.com/aws/2026/8/aws-and-nvidia-to-deliver-2-million-additional-gpus-and-next-generation-infrastructure-for-agentic-and-physical-ai)
+
+## Evidence and limits
+
+The updated report assigns Nvidia 12.11 GW of 43.86 GW of selected announced frontier-lab compute agreements, or 27.61%, rounded to 28%. The previous 39% was revised. Historical 80–90% uses AI-chip revenue in 2024–2025 from an analyst estimate. No conversion to current revenue share is justified without comparable pricing, shipment timing, scope and treatment of internally used chips.
+
+Alphabet expects TPU system revenue growth in 2027. AWS continues expanding Nvidia GPU deployment while using custom silicon. Both trends can increase total compute supply. The three-supplier comparison below measures selected revenue buckets for different fiscal quarters.
+
+**Current reported revenue comparison.** Nvidia’s $60.1B hyperscale sales were **55.9% of its own $107.6B Data Center revenue** and **51.9% of its $115.844B company revenue**. A limited comparison across three suppliers is **81.0%**, calculated as Nvidia Data Center $107.6B ÷ ($107.6B + AMD Data Center $8.546B + Broadcom AI semiconductor $16.7B). The fiscal quarters ended October 25, September 26 and August 2, respectively. The buckets include some CPUs, networking and system sales, and exclude other suppliers and much internally used silicon. The 81.0% calculation measures relative reported revenue for these three selected buckets. A current marketwide AI-accelerator chip-revenue percentage remains unobservable in these filings. [Nvidia Q3 CFO commentary](https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/q3fy27cfocommentary.htm) · [AMD 10-Q](https://ir.amd.com/financial-information/sec-filings/content/0000002488-26-000191/amd-20260926.htm) · [Broadcom Q3 release](https://investors.broadcom.com/news-releases/news-release-details/broadcom-inc-announces-third-quarter-fiscal-year-2026-financial)
+
+(Back to report. See undefined below.)
+
+---
+
+# [4] Valuation assumptions, formulas, and sensitivity
+
+## Overview
+
+**Reference:** November 20, 2026 regular-session close $125.53. **Units:** USD billions except share prices/EPS; shares in billions. Scenarios are author assumptions, not Nvidia EPS guidance or probabilities. Values apply a current forward-earnings multiple to FY2028 modeled EPS; they are not dated future price targets.
+
+[Chart: Earnings and multiple sensitivity. The corresponding numerical inputs and methodology are in the evidence section below.]
+
+## Original inputs
+
+[Price history, S&P Global data via Stock Analysis](https://stockanalysis.com/stocks/nvda/history/)
+
+[Q3 supplemental financial statements](https://s201.q4cdn.com/141608511/files/doc_financials/2027/Q327/Supplemental-Financial-Information-NVDA-2027-Q3.pdf)
+
+[FY2026 annual results](https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Announces-Financial-Results-for-Fourth-Quarter-and-Fiscal-2026/default.aspx)
+
+[Management FY2028 guidance](https://s201.q4cdn.com/141608511/files/content_files/NVDA-3Q27-Earnings-Transcript.pdf)
+
+## Formula and share basis
+
+EPS = (revenue × gross margin − operating expense) × (1 − tax rate) / 24.186. Other income is zero; stock compensation remains within modeled operating expense. Shares are held at the Q3 diluted weighted average, not a forecast of outstanding shares. No added investment-asset value, buyback benefit, separate guarantee charge or probability weighting. Value = EPS × selected forward P/E. The model therefore does not capture every possible liability, restatement or financing outcome.
+
+## Scenario inputs
+
+| Scenario | FY2028 revenue | Gross margin | Operating expense | Tax | EPS | Forward P/E | Illustrative value |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Severe stress | 400 | 55% | 65 | 20% | 5.126932936 | 12 | 61.52319524 |
+| Slower growth | 550 | 65% | 60 | 20% | 9.840403539 | 15 | 147.6060531 |
+| Guidance achieved | 741.44175 | 72.5% | 60 | 18% | 16.19065246 | 18 | 291.4317443 |
+| Higher shipments | 800 | 74% | 62 | 17% | 18.18820805 | 24 | 436.5169933 |
+
+## Valuation grid
+
+| EPS | 8× | 12× | 18× | 24× |
+|---|---:|---:|---:|---:|
+| $6 | $48 | $72 | $108 | $144 |
+| $10 | $80 | $120 | $180 | $240 |
+| $14 | $112 | $168 | $252 | $336 |
+| $18 | $144 | $216 | $324 | $432 |
+
+## Other reviewed arithmetic
+
+TTM GAAP EPS approximation = FY2027 nine-month EPS 7.55 + FY2026 Q4 EPS 1.76 = 9.31; price/TTM = 13.48335×. Rounded quarterly EPS and changing share counts limit precision. On the fixed diluted model share base, equity value = 125.53 × 24.186 = $3,036.06858B, not an official outstanding-share market cap. FY2028 modeled guidance-case P/E at the reference price = 7.75323×. Revenue shortfall of 10% at constant 72.5% margin and fixed costs reduces modeled EPS by 1.82249; one percentage point of gross margin changes EPS by 0.251378.
+
+## Reverse valuation
+
+Assume 66% gross margin, $60B operating expense, 18% tax, 24.186B shares and zero other income. Required revenue = [(price/P/E × shares)/(1−tax) + operating expense]/gross margin. At $125.53, revenue required at 10×, 15× and 20× is $651.897B, $464.901B and $371.403B respectively. No unique market-implied forecast exists without these assumptions.
+
+(Back to report. See undefined below.)
